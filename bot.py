@@ -138,7 +138,7 @@ def start(message):
     markup = InlineKeyboardMarkup()
     markup.add(InlineKeyboardButton(
         text="Открыть EarnStars",
-        web_app=WebAppInfo(url="http://127.0.0.1:5000/webapp")
+        web_app=WebAppInfo(url="https://pepsil1te.github.io/earnstars/")
     ))
     bot.send_message(
         message.chat.id,

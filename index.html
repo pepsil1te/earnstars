@@ -138,9 +138,7 @@
 
     <div id="gifts-page" class="page">
         <div class="page-header">
-            <button class="back-button" onclick="navigate('home')">
-                <img src="svg/close.svg" alt="close">
-            </button>
+            <button class="modal-close" onclick="navigate('home')">×</button>
             <h1>Подарки</h1>
         </div>
         <div class="gift-grid">
@@ -169,10 +167,8 @@
 
     <div id="transactions-page" class="page">
         <div class="page-header">
-            <button class="back-button" onclick="navigate('home')">
-                <span class="lang-text" data-ru="Назад" data-en="Back">Назад</span>
-            </button>
-            <h2 class="lang-text" data-ru="История транзакций" data-en="Transaction History">История транзакций</h2>
+            <button class="modal-close" onclick="navigate('home')">×</button>
+            <h2>История транзакций</h2>
         </div>
         <div class="transactions-list">
             <div class="empty-state">
@@ -186,7 +182,7 @@
     <div id="gift-modal" class="modal">
         <div class="modal-header">
             <h2>Отправить подарок</h2>
-            <button class="modal-close" onclick="hideGiftModal()">&times;</button>
+            <button class="modal-close" onclick="hideGiftModal()">×</button>
         </div>
         <div id="gift-preview" class="gift-preview"></div>
         <form class="form" onsubmit="return false;">
@@ -207,10 +203,10 @@
         </form>
     </div>
 
-    <div id="premium-modal" class="premium-modal">
+    <div id="premium-modal" class="modal">
         <div class="modal-header">
-            <h2>Купить Telegram Premium</h2>
-            <button class="modal-close" onclick="hidePremiumModal()">&times;</button>
+            <button class="modal-close" onclick="hidePremiumModal()">×</button>
+            <h2>Telegram Premium</h2>
         </div>
         <form class="form" onsubmit="return false;">
             <div class="form-group">

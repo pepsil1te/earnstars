@@ -20,14 +20,25 @@ var/
 .installed.cfg
 *.egg
 
-# Environment variables
-.env
+# Virtual Environment
+venv/
+ENV/
 
 # IDE
 .idea/
 .vscode/
 *.swp
 *.swo
+
+# Database
+*.db
+*.sqlite3
+
+# Environment variables
+.env
+
+# Logs
+*.log
 
 # OS
 .DS_Store

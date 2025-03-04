@@ -44,22 +44,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Инициализация анимаций
 function initAnimations() {
-    const animations = {
-        'heart': document.getElementById('heart-animation'),
-        'bear': document.getElementById('bear-animation')
+    // Инициализация анимаций подарков
+    const giftAnimations = {
+        'heart': 'gifts/heart.json',
+        'bear': 'gifts/bear.json',
+        'present': 'gifts/present.json',
+        'ring': 'gifts/ring.json'
     };
 
-    for (let [name, container] of Object.entries(animations)) {
+    Object.entries(giftAnimations).forEach(([id, path]) => {
+        const container = document.getElementById(`${id}-animation`);
         if (container) {
             lottie.loadAnimation({
                 container: container,
                 renderer: 'svg',
                 loop: true,
                 autoplay: true,
-                path: `gifts/${name}.json`
+                path: path
             });
         }
-    }
+    });
 }
 
 // Навигация
@@ -149,19 +153,11 @@ function selectPackage(amount) {
     if (starsAmountElement) {
         starsAmountElement.value = amount;
     }
+    
     const payButton = document.getElementById('stars-pay-button');
     if (payButton) {
         payButton.style.display = 'block';
-        
-        // Учитываем состояние списка пакетов для позиционирования кнопки
-        const packagesWrapper = document.querySelector('.packages-wrapper');
-        if (packagesWrapper) {
-            if (packagesExpanded) {
-                packagesWrapper.classList.add('expanded');
-            } else {
-                packagesWrapper.classList.remove('expanded');
-            }
-        }
+        payButton.style.bottom = packagesExpanded ? '20px' : '20px';
     }
 }
 
@@ -208,6 +204,16 @@ function showAllPackages() {
     }
     
     packagesExpanded = !packagesExpanded;
+    
+    // Обновляем позицию кнопки оплаты
+    const payButton = document.getElementById('stars-pay-button');
+    if (payButton && payButton.style.display === 'block') {
+        if (packagesExpanded) {
+            payButton.style.bottom = '20px';
+        } else {
+            payButton.style.bottom = '20px';
+        }
+    }
 }
 
 // Обработчики модальных окон

@@ -1,0 +1,79 @@
+body {
+    background-color: #f8f9fa;
+}
+
+.container {
+    max-width: 768px;
+}
+
+.card {
+    border: none;
+    border-radius: 15px;
+    box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
+}
+
+.card-header {
+    background-color: #fff;
+    border-bottom: 1px solid #eee;
+    border-radius: 15px 15px 0 0 !important;
+    padding: 1.25rem;
+}
+
+.card-body {
+    padding: 1.5rem;
+}
+
+.btn-primary {
+    background-color: #0088cc;
+    border-color: #0088cc;
+    padding: 0.75rem 2rem;
+    border-radius: 10px;
+}
+
+.btn-primary:hover {
+    background-color: #006699;
+    border-color: #006699;
+}
+
+.gift-type {
+    cursor: pointer;
+    transition: transform 0.2s;
+    border-radius: 10px;
+    padding: 1rem;
+    text-align: center;
+}
+
+.gift-type:hover {
+    transform: translateY(-5px);
+}
+
+.gift-type img {
+    width: 64px;
+    height: 64px;
+    margin-bottom: 0.5rem;
+}
+
+.stars-package {
+    cursor: pointer;
+    transition: transform 0.2s;
+    border: 2px solid #eee;
+    border-radius: 10px;
+    padding: 1rem;
+    text-align: center;
+}
+
+.stars-package:hover {
+    transform: translateY(-5px);
+    border-color: #0088cc;
+}
+
+.stars-package .price {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #0088cc;
+}
+
+.stars-package .amount {
+    font-size: 1.25rem;
+    color: #666;
+}

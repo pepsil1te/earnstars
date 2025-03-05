@@ -143,11 +143,10 @@ function buyForSelf() {
 
 function buyStars() {
     navigate('buy');
-    showAllPackages(); // Показываем пакеты сразу
     packagesExpanded = false;
     const packagesContainer = document.querySelector('.packages');
     if (packagesContainer) {
-        const packagesHtml = allPackages.slice(0, 4).map(pkg => `
+        const packagesHtml = allPackages.slice(0, 3).map(pkg => `
             <div class="package" onclick="selectPackage(${pkg.stars})">
                 <div class="package-stars">
                     <img src="svg/star.svg" alt="star" class="star-icon">
@@ -176,6 +175,12 @@ function selectPackage(amount) {
     const selectedElement = document.querySelector(`.package[onclick="selectPackage(${amount})"]`);
     if (selectedElement) {
         selectedElement.classList.add('selected');
+    }
+
+    // Устанавливаем значение в поле ввода
+    const starsAmountInput = document.getElementById('starsAmount');
+    if (starsAmountInput) {
+        starsAmountInput.value = amount;
     }
     
     const payButton = document.getElementById('stars-pay-button');
@@ -230,7 +235,7 @@ function showAllPackages() {
         packagesContainer.innerHTML = packagesHtml;
         button.textContent = currentLanguage === 'ru' ? 'Скрыть пакеты' : 'Hide packages';
     } else {
-        const packagesHtml = allPackages.slice(0, 4).map(pkg => `
+        const packagesHtml = allPackages.slice(0, 3).map(pkg => `
             <div class="package" onclick="selectPackage(${pkg.stars})">
                 <div class="package-stars">
                     <img src="svg/star.svg" alt="star" class="star-icon">

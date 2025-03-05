@@ -581,39 +581,91 @@ async function loadPrices() {
         }
         
         allPackages = prices.stars.packages;
-        
-        // Если есть выбранный пакет, обновляем его цену
-        if (selectedPackage) {
-            selectedPackage = allPackages.find(pkg => pkg.stars === selectedPackage.stars) || selectedPackage;
-            updateSelectedPackageDisplay();
-        }
-        
-        // Обновляем отображение пакетов
-        const packagesContainer = document.querySelector('.packages');
-        if (packagesContainer) {
-            if (packagesExpanded) {
-                showAllPackages();
-            } else {
-                const packagesHtml = allPackages.slice(0, 3).map(pkg => `
-                    <div class="package" onclick="selectPackage(${pkg.stars})">
-                        <div class="package-stars">
-                            <img src="svg/star.svg" alt="star" class="star-icon">
-                            <span>${pkg.stars.toLocaleString()} звёзд</span>
-                        </div>
-                        <div class="package-price">${pkg.price} ₽ <span class="usd">~${pkg.usd} $</span></div>
-                    </div>
-                `).join('');
-                packagesContainer.innerHTML = packagesHtml;
-            }
-        }
+        showAllPackages();
     } catch (error) {
         console.error('Ошибка при загрузке цен:', error);
         showError('Не удалось загрузить цены. Попробуйте обновить страницу.');
     }
 }
 
-// Автоматическое обновление цен каждые 5 секунд
-setInterval(loadPrices, 5000);
+// Функция для проверки актуальности цены перед оплатой
+async function verifyPrice() {
+    try {
+        // Загружаем актуальные цены
+        const timestamp = new Date().getTime();
+        const response = await fetch(`https://raw.githubusercontent.com/pepsil1te/earnstars/main/config/prices.json?t=${timestamp}`);
+        
+        if (!response.ok) {
+            throw new Error(`Ошибка загрузки: ${response.status}`);
+        }
+        
+        const prices = await response.json();
+        if (!prices || !prices.stars || !prices.stars.packages) {
+            throw new Error('Некорректный формат данных');
+        }
+        
+        // Проверяем цену выбранного пакета
+        const actualPackage = prices.stars.packages.find(pkg => pkg.stars === selectedPackage.stars);
+        if (!actualPackage) {
+            throw new Error('Выбранный пакет больше не доступен');
+        }
+        
+        // Если цена изменилась, обновляем данные и показываем уведомление
+        if (actualPackage.price !== selectedPackage.price) {
+            selectedPackage = actualPackage;
+            allPackages = prices.stars.packages;
+            showAllPackages();
+            updateSelectedPackageDisplay();
+            showError('Цена пакета была обновлена. Пожалуйста, проверьте новую стоимость.');
+            return false;
+        }
+        
+        return true;
+    } catch (error) {
+        console.error('Ошибка при проверке цены:', error);
+        showError('Не удалось проверить актуальность цены. Попробуйте еще раз.');
+        return false;
+    }
+}
+
+async function processStarsPayment() {
+    try {
+        // Проверяем корректность данных
+        const recipient = document.getElementById('recipient').value.trim();
+        const starsAmount = parseInt(document.getElementById('starsAmount').value);
+        
+        if (!recipient) {
+            showError('Укажите получателя');
+            return;
+        }
+        
+        if (!selectedPackage || !starsAmount) {
+            showError('Выберите количество звезд');
+            return;
+        }
+        
+        // Проверяем актуальность цены перед оплатой
+        const priceIsValid = await verifyPrice();
+        if (!priceIsValid) {
+            return;
+        }
+        
+        // Формируем данные для оплаты
+        const data = {
+            recipient: recipient,
+            stars: starsAmount,
+            price: selectedPackage.price
+        };
+        
+        // Отправляем в telegram-web-app
+        tg.sendData(JSON.stringify(data));
+        tg.close();
+        
+    } catch (error) {
+        console.error('Ошибка при обработке платежа:', error);
+        showError('Произошла ошибка при обработке платежа');
+    }
+}
 
 // Реферальная система
 function initReferralSystem() {

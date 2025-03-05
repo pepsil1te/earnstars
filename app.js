@@ -252,25 +252,20 @@ function showAllPackages() {
 
 async function checkCurrentPrice() {
     try {
-        // Проверяем, запущено ли приложение на GitHub Pages
-        const isGitHubPages = window.location.hostname.includes('github.io');
-        const response = await fetch('https://raw.githubusercontent.com/pepsil1te/earnstars/main/config/prices.json');
+        const timestamp = new Date().getTime();
+        const response = await fetch(`https://raw.githubusercontent.com/pepsil1te/earnstars/main/config/prices.json?_=${timestamp}`);
         const prices = await response.json();
         const currentPackage = prices.stars.packages.find(p => p.stars === selectedPackage.stars);
         
-        if (currentPackage.price !== selectedPackage.price) {
-            tg.showPopup({
-                title: 'Цена изменилась',
-                message: `Цена на пакет ${selectedPackage.stars} звезд изменилась с ${selectedPackage.price}₽ на ${currentPackage.price}₽. Пожалуйста, выберите пакет заново.`,
-                buttons: [{text: 'OK', type: 'ok'}]
-            });
-            allPackages = prices.stars.packages;
-            showAllPackages();
+        if (currentPackage && currentPackage.price !== selectedPackage.price) {
+            selectedPackage = currentPackage;
+            showError('Цена пакета изменилась. Пожалуйста, проверьте новую цену.');
+            updateSelectedPackageDisplay();
             return false;
         }
         return true;
     } catch (error) {
-        console.error('Error checking price:', error);
+        console.error('Error checking current price:', error);
         return false;
     }
 }
@@ -549,18 +544,57 @@ function contactSupport() {
     window.open('https://t.me/ooostyx', '_blank');
 }
 
-let allPackages = [];
-let selectedPackage = null;
+let currentGift = null;
+
+function showError(message) {
+    tg.showAlert(message);
+}
+
+function updateSelectedPackageDisplay() {
+    const packages = document.querySelectorAll('.package');
+    packages.forEach(pkg => pkg.classList.remove('selected'));
+    
+    const selectedElement = document.querySelector(`.package[onclick="selectPackage(${selectedPackage.stars})"]`);
+    if (selectedElement) {
+        selectedElement.classList.add('selected');
+    }
+    
+    const starsAmountInput = document.getElementById('starsAmount');
+    if (starsAmountInput) {
+        starsAmountInput.value = selectedPackage.stars;
+    }
+}
 
 // Функция для загрузки актуальных цен
 async function loadPrices() {
     try {
-        const response = await fetch('https://raw.githubusercontent.com/pepsil1te/earnstars/main/config/prices.json');
+        console.log('Начинаем загрузку цен...');
+        const timestamp = new Date().getTime();
+        const url = `https://earnstars.onrender.com/prices?_=${timestamp}`;
+        console.log('URL для загрузки:', url);
+        
+        const response = await fetch(url);
+        console.log('Статус ответа:', response.status);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
         const prices = await response.json();
+        console.log('Загруженные цены:', prices);
+        
+        if (!prices || !prices.stars || !prices.stars.packages) {
+            throw new Error('Некорректный формат данных');
+        }
+        
         allPackages = prices.stars.packages;
+        console.log('Обновленные пакеты:', allPackages);
+        
         showAllPackages();
+        console.log('Пакеты отображены');
     } catch (error) {
-        console.error('Error loading prices:', error);
+        console.error('Ошибка при загрузке цен:', error);
+        tg.showAlert('Ошибка при загрузке цен. Пожалуйста, попробуйте позже.');
     }
 }
 
@@ -620,4 +654,5 @@ function inviteFriends() {
     }
 }
 
-let currentGift = null;
+let allPackages = [];
+let selectedPackage = null;

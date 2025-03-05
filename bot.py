@@ -3,6 +3,7 @@ import json
 from dotenv import load_dotenv
 import telebot
 from flask import Flask, request, render_template_string, send_from_directory, jsonify
+from flask_cors import CORS
 from telebot.types import WebAppInfo, InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup, KeyboardButton
 
 load_dotenv()
@@ -11,6 +12,7 @@ ADMIN_ID = int(os.getenv('ADMIN_ID', '0'))  # ID администратора
 
 bot = telebot.TeleBot(BOT_TOKEN)
 app = Flask(__name__)
+CORS(app)  # Включаем CORS для всех routes
 
 # Путь к директории с файлами
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -146,8 +148,12 @@ def webapp():
 
 @app.route('/prices')
 def get_prices():
-    prices = load_prices()
-    return jsonify(prices)
+    try:
+        with open('config/prices.json', 'r', encoding='utf-8') as f:
+            prices = json.load(f)
+        return jsonify(prices)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 @bot.message_handler(commands=['start'])
 def start(message):

@@ -2,6 +2,11 @@
     "stars": {
         "packages": [
             {
+                "stars": 1,
+                "price": 50,
+                "usd": 0.56
+            },
+            {
                 "stars": 50,
                 "price": 60,
                 "usd": 0.65

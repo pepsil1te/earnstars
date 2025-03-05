@@ -208,20 +208,11 @@ let packagesExpanded = false;
 
 function showAllPackages() {
     const packagesContainer = document.querySelector('.packages');
-    if (!packagesContainer) return;
-    
     const button = document.querySelector('.show-more');
-    if (!button) return;
-
-    // Если пакеты еще не загружены, загрузим их
-    if (!allPackages || allPackages.length === 0) {
-        loadPrices();
-        return;
-    }
-    
-    packagesExpanded = !packagesExpanded;
+    if (!packagesContainer || !allPackages || !button) return;
     
     if (packagesExpanded) {
+        // Показываем все пакеты
         const packagesHtml = allPackages.map(pkg => `
             <div class="package" onclick="selectPackage(${pkg.stars})">
                 <div class="package-stars">
@@ -235,6 +226,7 @@ function showAllPackages() {
         packagesContainer.innerHTML = packagesHtml;
         button.textContent = currentLanguage === 'ru' ? 'Скрыть пакеты' : 'Hide packages';
     } else {
+        // Показываем только первые 3 пакета
         const packagesHtml = allPackages.slice(0, 3).map(pkg => `
             <div class="package" onclick="selectPackage(${pkg.stars})">
                 <div class="package-stars">
@@ -248,6 +240,11 @@ function showAllPackages() {
         packagesContainer.innerHTML = packagesHtml;
         button.textContent = currentLanguage === 'ru' ? 'Показать все пакеты' : 'Show all packages';
     }
+}
+
+function togglePackages() {
+    packagesExpanded = !packagesExpanded;
+    showAllPackages();
 }
 
 async function checkCurrentPrice() {
@@ -569,32 +566,35 @@ function updateSelectedPackageDisplay() {
 async function loadPrices() {
     try {
         console.log('Начинаем загрузку цен...');
-        const timestamp = new Date().getTime();
-        const url = `https://earnstars.onrender.com/prices?_=${timestamp}`;
-        console.log('URL для загрузки:', url);
         
-        const response = await fetch(url);
-        console.log('Статус ответа:', response.status);
+        // URL вашего сервера
+        const baseUrl = window.location.hostname.includes('github.io') 
+            ? 'https://earnstars.onrender.com' 
+            : 'http://127.0.0.1:5000';
+            
+        const response = await fetch(`${baseUrl}/prices`, {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            }
+        });
         
         if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+            throw new Error(`Ошибка загрузки: ${response.status}`);
         }
         
         const prices = await response.json();
-        console.log('Загруженные цены:', prices);
-        
         if (!prices || !prices.stars || !prices.stars.packages) {
             throw new Error('Некорректный формат данных');
         }
         
         allPackages = prices.stars.packages;
-        console.log('Обновленные пакеты:', allPackages);
-        
         showAllPackages();
-        console.log('Пакеты отображены');
     } catch (error) {
         console.error('Ошибка при загрузке цен:', error);
-        tg.showAlert('Ошибка при загрузке цен. Пожалуйста, попробуйте позже.');
+        // Показываем ошибку пользователю
+        showError('Не удалось загрузить цены. Проверьте подключение к интернету и попробуйте обновить страницу.');
     }
 }
 

@@ -2,7 +2,7 @@ import os
 import json
 from dotenv import load_dotenv
 import telebot
-from flask import Flask, request, render_template_string, send_from_directory, jsonify
+from flask import Flask, request, jsonify, send_from_directory, render_template_string
 from flask_cors import CORS
 from telebot.types import WebAppInfo, InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup, KeyboardButton
 
@@ -12,7 +12,13 @@ ADMIN_ID = int(os.getenv('ADMIN_ID', '0'))  # ID администратора
 
 bot = telebot.TeleBot(BOT_TOKEN)
 app = Flask(__name__)
-CORS(app)  # Включаем CORS для всех routes
+CORS(app, resources={
+    r"/prices": {
+        "origins": ["https://pepsil1te.github.io", "http://127.0.0.1:5000"],
+        "methods": ["GET"],
+        "allow_headers": ["Content-Type"]
+    }
+})
 
 # Путь к директории с файлами
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -149,11 +155,14 @@ def webapp():
 @app.route('/prices')
 def get_prices():
     try:
-        with open('config/prices.json', 'r', encoding='utf-8') as f:
+        # Используем абсолютный путь к файлу
+        file_path = os.path.join(CURRENT_DIR, 'config', 'prices.json')
+        with open(file_path, 'r', encoding='utf-8') as f:
             prices = json.load(f)
-        return jsonify(prices)
+            return jsonify(prices)
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        print(f"Error loading prices: {str(e)}")  # Добавляем лог ошибки
+        return jsonify({'error': 'Failed to load prices'}), 500
 
 @bot.message_handler(commands=['start'])
 def start(message):

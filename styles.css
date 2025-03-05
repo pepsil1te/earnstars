@@ -208,6 +208,7 @@ label {
     margin-bottom: 10px;
     overflow: visible;
     max-height: none;
+    transition: max-height 0.3s ease;
 }
 
 .packages.expanded {
@@ -215,38 +216,58 @@ label {
 }
 
 .package {
-    background: #212a32;
-    border-radius: 8px;
-    padding: 12px;
+    background: #1a2026;
+    border-radius: 12px;
+    padding: 16px;
     cursor: pointer;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    transition: transform 0.2s ease, background-color 0.2s ease;
+    transition: all 0.2s ease;
+    border: 2px solid #2a343d;
+    position: relative;
+    overflow: hidden;
+}
+
+.package:hover {
+    border-color: #9d3ac4;
+    box-shadow: 0 0 15px rgba(157, 58, 196, 0.3);
+    transform: translateY(-2px);
+}
+
+.package.selected {
+    border-color: #9d3ac4;
+    box-shadow: 0 0 20px rgba(157, 58, 196, 0.4);
+    background: linear-gradient(45deg, #1a2026, #212a32);
+}
+
+.package::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(157, 58, 196, 0.2), transparent);
 }
 
 .package-stars {
     display: flex;
     align-items: center;
     gap: 8px;
-    color: white;
-    font-size: 16px;
+    margin-bottom: 8px;
 }
 
 .star-icon {
-    width: 20px;
-    height: 20px;
+    width: 16px;
+    height: 16px;
 }
 
 .package-price {
-    color: white;
-    font-size: 16px;
+    font-size: 18px;
+    font-weight: 500;
 }
 
 .usd {
     color: #666;
     font-size: 14px;
-    margin-left: 4px;
 }
 
 .package:active {
@@ -257,16 +278,23 @@ label {
 .show-more {
     width: 100%;
     padding: 12px;
-    background: none;
-    border: none;
-    color: #9d3ac4;
-    font-size: 14px;
-    cursor: pointer;
     margin-top: 16px;
+    background: #9d3ac4;
+    border: none;
+    border-radius: 8px;
+    color: white;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.2s ease;
 }
 
 .show-more:hover {
-    text-decoration: underline;
+    background: #b344e0;
+    transform: translateY(-1px);
+}
+
+.show-more:active {
+    transform: translateY(0);
 }
 
 .transactions-list {

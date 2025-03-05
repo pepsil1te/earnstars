@@ -567,14 +567,8 @@ async function loadPrices() {
     try {
         console.log('Начинаем загрузку цен...');
         
-        // Всегда используем локальный сервер
-        const response = await fetch('http://127.0.0.1:5000/prices', {
-            method: 'GET',
-            headers: {
-                'Accept': 'application/json',
-                'Content-Type': 'application/json'
-            }
-        });
+        // Загружаем цены напрямую из GitHub
+        const response = await fetch('https://raw.githubusercontent.com/pepsil1te/earnstars/main/config/prices.json');
         
         if (!response.ok) {
             throw new Error(`Ошибка загрузки: ${response.status}`);
@@ -589,7 +583,7 @@ async function loadPrices() {
         showAllPackages();
     } catch (error) {
         console.error('Ошибка при загрузке цен:', error);
-        showError('Не удалось загрузить цены. Убедитесь, что локальный сервер запущен.');
+        showError('Не удалось загрузить цены. Попробуйте обновить страницу.');
     }
 }
 

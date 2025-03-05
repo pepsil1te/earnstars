@@ -1,5 +1,7 @@
 import os
 import json
+import base64
+import requests
 from dotenv import load_dotenv
 import telebot
 from flask import Flask, request, jsonify, send_from_directory, render_template_string
@@ -8,7 +10,10 @@ from telebot.types import WebAppInfo, InlineKeyboardMarkup, InlineKeyboardButton
 
 load_dotenv()
 BOT_TOKEN = os.getenv('BOT_TOKEN')
-ADMIN_ID = int(os.getenv('ADMIN_ID', '0'))  # ID администратора
+ADMIN_ID = int(os.getenv('ADMIN_ID', '0'))
+GITHUB_TOKEN = os.getenv('GITHUB_TOKEN')  # Добавьте этот токен в .env файл
+GITHUB_REPO = "pepsil1te/earnstars"
+GITHUB_BRANCH = "main"
 
 bot = telebot.TeleBot(BOT_TOKEN)
 app = Flask(__name__)
@@ -30,9 +35,64 @@ def load_prices():
     with open(PRICES_FILE, 'r', encoding='utf-8') as f:
         return json.load(f)
 
+def update_github_file(prices):
+    """Обновляет файл prices.json в GitHub репозитории"""
+    if not GITHUB_TOKEN:
+        return False, "GitHub токен не настроен"
+
+    try:
+        # Путь к файлу в репозитории
+        file_path = "config/prices.json"
+        
+        # API endpoint для GitHub
+        url = f"https://api.github.com/repos/{GITHUB_REPO}/contents/{file_path}"
+        
+        # Заголовки для авторизации
+        headers = {
+            "Authorization": f"token {GITHUB_TOKEN}",
+            "Accept": "application/vnd.github.v3+json"
+        }
+
+        # Получаем текущий файл, чтобы узнать его SHA
+        response = requests.get(url, headers=headers)
+        if response.status_code != 200:
+            return False, f"Ошибка получения файла: {response.status_code}"
+        
+        current_file = response.json()
+        
+        # Кодируем новое содержимое в base64
+        content = json.dumps(prices, ensure_ascii=False, indent=4)
+        content_bytes = content.encode('utf-8')
+        content_base64 = base64.b64encode(content_bytes).decode('utf-8')
+        
+        # Данные для обновления
+        data = {
+            "message": "Обновление цен через бота",
+            "content": content_base64,
+            "sha": current_file["sha"],
+            "branch": GITHUB_BRANCH
+        }
+        
+        # Отправляем обновление
+        response = requests.put(url, headers=headers, json=data)
+        
+        if response.status_code == 200:
+            return True, "Цены успешно обновлены в GitHub"
+        else:
+            return False, f"Ошибка обновления файла: {response.status_code}"
+            
+    except Exception as e:
+        return False, f"Ошибка при обновлении GitHub: {str(e)}"
+
 def save_prices(prices):
+    """Сохраняет цены локально и в GitHub"""
+    # Сохраняем локально
     with open(PRICES_FILE, 'w', encoding='utf-8') as f:
         json.dump(prices, f, ensure_ascii=False, indent=4)
+    
+    # Обновляем в GitHub
+    success, message = update_github_file(prices)
+    return success, message
 
 @app.route('/')
 def index():
@@ -240,40 +300,71 @@ def edit_premium_prices(message):
     
     bot.send_message(message.chat.id, text)
 
-@bot.message_handler(func=lambda message: message.text.startswith(('звезды ', 'подарок ', 'премиум ')) and message.from_user.id == ADMIN_ID)
-def update_prices(message):
-    try:
-        prices = load_prices()
-        parts = message.text.split()
+@bot.message_handler(func=lambda message: message.text == "💫 Цены на звезды")
+def edit_star_prices(message):
+    if message.from_user.id != ADMIN_ID:
+        return
         
-        if parts[0] == 'звезды' and len(parts) == 3:
-            idx = int(parts[1]) - 1
-            new_price = int(parts[2])
-            if 0 <= idx < len(prices['stars']['packages']):
-                old_price = prices['stars']['packages'][idx]['price']
-                prices['stars']['packages'][idx]['price'] = new_price
-                prices['stars']['packages'][idx]['usd'] = round(new_price / 92.5, 2)  # Актуальный курс
-                save_prices(prices)
-                bot.reply_to(message, f"✅ Цена пакета {prices['stars']['packages'][idx]['stars']} звезд изменена с {old_price}₽ на {new_price}₽ (${prices['stars']['packages'][idx]['usd']})")
-            else:
-                bot.reply_to(message, "❌ Неверный номер пакета")
-        
-        elif parts[0] == 'подарок' and len(parts) == 3:
-            idx = int(parts[1]) - 1
-            new_price = int(parts[2])
-            gifts = list(prices['gifts'].items())
-            if 0 <= idx < len(gifts):
-                gift_id, gift = gifts[idx]
-                old_price = gift['price']
-                gift['price'] = new_price
-                prices['gifts'][gift_id] = gift
-                save_prices(prices)
-                bot.reply_to(message, f"✅ Цена подарка {gift['name']} изменена с {old_price}₽ на {new_price}₽")
-            else:
-                bot.reply_to(message, "❌ Неверный номер подарка")
+    prices = load_prices()
+    packages = prices['stars']['packages']
     
-    except (ValueError, IndexError):
-        bot.reply_to(message, "❌ Неверный формат команды")
+    response = "Текущие цены на звезды:\n\n"
+    for pkg in packages:
+        response += f"{pkg['stars']} звезд = {pkg['price']}₽ (~{pkg['usd']}$)\n"
+    
+    response += "\nДля изменения цены отправьте сообщение в формате:\n"
+    response += "stars <количество> <цена> <цена в USD>\n"
+    response += "Например: stars 50 60 0.65"
+    
+    bot.reply_to(message, response)
+
+@bot.message_handler(func=lambda message: message.text.startswith('stars '))
+def update_prices(message):
+    if message.from_user.id != ADMIN_ID:
+        return
+        
+    try:
+        # Разбираем команду
+        parts = message.text.split()
+        if len(parts) != 4:
+            raise ValueError("Неверный формат команды")
+            
+        stars = int(parts[1])
+        price = int(parts[2])
+        usd = float(parts[3])
+        
+        # Загружаем текущие цены
+        prices = load_prices()
+        
+        # Находим и обновляем нужный пакет
+        package_found = False
+        for pkg in prices['stars']['packages']:
+            if pkg['stars'] == stars:
+                pkg['price'] = price
+                pkg['usd'] = usd
+                package_found = True
+                break
+                
+        if not package_found:
+            prices['stars']['packages'].append({
+                'stars': stars,
+                'price': price,
+                'usd': usd
+            })
+            prices['stars']['packages'].sort(key=lambda x: x['stars'])
+        
+        # Сохраняем изменения
+        success, message = save_prices(prices)
+        
+        if success:
+            response = f"✅ Цена обновлена:\n{stars} звезд = {price}₽ (~{usd}$)\n\n{message}"
+        else:
+            response = f"❌ Ошибка при сохранении:\n{message}"
+        
+        bot.reply_to(message, response)
+        
+    except Exception as e:
+        bot.reply_to(message, f"❌ Ошибка: {str(e)}\n\nИспользуйте формат:\nstars <количество> <цена> <цена в USD>\nНапример: stars 50 60 0.65")
 
 @bot.message_handler(func=lambda message: message.text == '🔙 Назад' and message.from_user.id == ADMIN_ID)
 def back_to_start(message):

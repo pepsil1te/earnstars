@@ -23,6 +23,7 @@ body {
     height: 100vh;
     display: flex;
     flex-direction: column;
+    padding-bottom: 60px;
 }
 
 .header {
@@ -71,11 +72,11 @@ body {
 .page {
     display: none;
     padding: 16px;
-    height: calc(100vh - 80px);
+    height: calc(100vh - 140px);
     overflow-y: auto;
     opacity: 0;
     animation: fadeIn 0.3s ease forwards;
-    padding-bottom: 100px;
+    padding-bottom: 80px;
 }
 
 @keyframes fadeIn {
@@ -183,11 +184,11 @@ label {
 .input-container .input-icon {
     position: absolute;
     left: 12px;
-    top: 50%;
-    transform: translateY(-50%);
+    top: 14px;
     width: 20px;
     height: 20px;
     opacity: 0.6;
+    pointer-events: none;
 }
 
 .self-buy {
@@ -201,10 +202,17 @@ label {
 }
 
 .packages {
+    margin-top: 16px;
     display: grid;
     grid-template-columns: 1fr;
-    gap: 8px;
-    margin-top: 8px;
+    gap: 16px;
+    max-height: 400px;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+}
+
+.packages.expanded {
+    max-height: none;
 }
 
 .package {
@@ -249,20 +257,17 @@ label {
 
 .show-more {
     width: 100%;
-    margin: 4px 0;
     padding: 12px;
-    background: #212a32;
+    background: none;
     border: none;
-    border-radius: 8px;
-    color: white;
-    font-size: 16px;
+    color: #9d3ac4;
+    font-size: 14px;
     cursor: pointer;
-    transition: all 0.2s ease;
+    margin-top: 16px;
 }
 
 .show-more:hover {
-    background: #2a343d;
-    box-shadow: 0 0 15px rgba(157, 58, 196, 0.3);
+    text-decoration: underline;
 }
 
 .transactions-list {
@@ -363,11 +368,12 @@ button {
 
 .gift-grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
     gap: 16px;
     padding: 16px;
     max-width: 600px;
     margin: 0 auto;
+    padding-bottom: 80px;
 }
 
 .gift-item {
@@ -520,15 +526,56 @@ button {
 
 #stars-pay-button {
     position: fixed;
-    bottom: 20px;
-    left: 16px;
-    right: 16px;
+    left: 50%;
+    transform: translateX(-50%);
     width: calc(100% - 32px);
-    z-index: 1;
+    max-width: 500px;
+    bottom: 80px;
+    z-index: 1000;
+    margin: 0;
+}
+
+.gift-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    z-index: 1000;
+    padding: 16px;
+    padding-top: 80px;
+    overflow-y: auto;
+}
+
+.gift-modal-content {
+    background: #212a32;
+    border-radius: 12px;
+    width: 100%;
+    max-width: 400px;
+    padding: 20px;
+    padding-bottom: 120px;
+    position: relative;
+}
+
+.gift-modal .button {
+    position: fixed;
+    bottom: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: calc(100% - 32px);
+    max-width: 400px;
+    margin-bottom: 16px;
+    z-index: 1001;
 }
 
 .packages-section {
-    margin-bottom: 120px;
+    position: relative;
+    padding-bottom: 80px;
 }
 
 .gift-preview {
@@ -690,13 +737,12 @@ button {
 }
 
 .error-field {
-    border-color: #ff4444 !important;
-    background-color: rgba(255, 68, 68, 0.1) !important;
+    border: 1px solid #ff4444 !important;
 }
 
 .error-message {
     color: #ff4444;
-    font-size: 14px;
+    font-size: 12px;
     margin-top: 4px;
 }
 

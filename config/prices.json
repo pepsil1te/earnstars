@@ -1,0 +1,122 @@
+{
+    "stars": {
+        "packages": [
+            {
+                "stars": 50,
+                "price": 50,
+                "usd": 0.54
+            },
+            {
+                "stars": 75,
+                "price": 75,
+                "usd": 0.81
+            },
+            {
+                "stars": 100,
+                "price": 100,
+                "usd": 1.08
+            },
+            {
+                "stars": 150,
+                "price": 150,
+                "usd": 1.62
+            },
+            {
+                "stars": 200,
+                "price": 200,
+                "usd": 2.16
+            },
+            {
+                "stars": 500,
+                "price": 500,
+                "usd": 5.41
+            },
+            {
+                "stars": 750,
+                "price": 650,
+                "usd": 7.03
+            },
+            {
+                "stars": 1000,
+                "price": 1000,
+                "usd": 15.0
+            },
+            {
+                "stars": 1500,
+                "price": 1500,
+                "usd": 22.5
+            },
+            {
+                "stars": 2500,
+                "price": 2500,
+                "usd": 37.5
+            },
+            {
+                "stars": 5000,
+                "price": 5000,
+                "usd": 75.0
+            },
+            {
+                "stars": 10000,
+                "price": 10000,
+                "usd": 150.0
+            },
+            {
+                "stars": 25000,
+                "price": 25000,
+                "usd": 375.0
+            },
+            {
+                "stars": 35000,
+                "price": 35000,
+                "usd": 525.0
+            },
+            {
+                "stars": 50000,
+                "price": 50000,
+                "usd": 750.0
+            }
+        ]
+    },
+    "gifts": {
+        "heart": {
+            "id": 1,
+            "price": 100,
+            "name": "Сердце"
+        },
+        "bear": {
+            "id": 2,
+            "price": 200,
+            "name": "Мишка"
+        },
+        "present": {
+            "id": 3,
+            "price": 150,
+            "name": "Подарок"
+        },
+        "ring": {
+            "id": 4,
+            "price": 300,
+            "name": "Кольцо"
+        }
+    },
+    "premium": {
+        "packages": [
+            {
+                "duration": 1,
+                "price": 500,
+                "name": "1 месяц"
+            },
+            {
+                "duration": 6,
+                "price": 2500,
+                "name": "6 месяцев"
+            },
+            {
+                "duration": 12,
+                "price": 4500,
+                "name": "12 месяцев"
+            }
+        ]
+    }
+}

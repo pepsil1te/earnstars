@@ -40,6 +40,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (premiumModal) {
         premiumModal.style.display = 'none';
     }
+    
+    loadPrices();
 });
 
 // Инициализация анимаций
@@ -112,24 +114,24 @@ function updateTexts() {
 // Функции для покупки звезд
 function buyForSelf() {
     if (tg.initDataUnsafe.user && tg.initDataUnsafe.user.username) {
-        const usernameElement = document.getElementById('username');
-        if (usernameElement) {
-            usernameElement.value = '@' + tg.initDataUnsafe.user.username;
-            usernameElement.classList.remove('error-field');
-            const errorMsg = document.getElementById('username-error');
+        const recipientInput = document.getElementById('recipient');
+        if (recipientInput) {
+            recipientInput.value = '@' + tg.initDataUnsafe.user.username;
+            recipientInput.classList.remove('error-field');
+            const errorMsg = document.getElementById('recipient-error');
             if (errorMsg) errorMsg.remove();
         }
     } else {
-        const usernameElement = document.getElementById('username');
-        if (usernameElement) {
-            usernameElement.classList.add('error-field');
-            const existingError = document.getElementById('username-error');
+        const recipientInput = document.getElementById('recipient');
+        if (recipientInput) {
+            recipientInput.classList.add('error-field');
+            const existingError = document.getElementById('recipient-error');
             if (!existingError) {
                 const errorMsg = document.createElement('div');
-                errorMsg.id = 'username-error';
+                errorMsg.id = 'recipient-error';
                 errorMsg.className = 'error-message';
-                errorMsg.textContent = 'Username не определен';
-                const parentNode = usernameElement.parentNode;
+                errorMsg.textContent = currentLanguage === 'ru' ? 'Username не определен' : 'Username not found';
+                const parentNode = recipientInput.parentNode;
                 if (parentNode) {
                     parentNode.appendChild(errorMsg);
                 }
@@ -141,7 +143,23 @@ function buyForSelf() {
 function buyStars() {
     navigate('buy');
     packagesExpanded = false;
-    showAllPackages();
+    const packagesContainer = document.querySelector('.packages');
+    if (packagesContainer) {
+        const packagesHtml = allPackages.slice(0, 4).map(pkg => `
+            <div class="package" onclick="selectPackage(${pkg.stars})">
+                <div class="package-stars">
+                    <img src="svg/star.svg" alt="star" class="star-icon">
+                    <span>${pkg.stars.toLocaleString()} звёзд</span>
+                </div>
+                <div class="package-price">${pkg.price} ₽ <span class="usd">~${pkg.usd} $</span></div>
+            </div>
+        `).join('');
+        packagesContainer.innerHTML = packagesHtml;
+    }
+    const button = document.querySelector('.show-more');
+    if (button) {
+        button.textContent = currentLanguage === 'ru' ? 'Показать все пакеты' : 'Show all packages';
+    }
     const starsPayButton = document.getElementById('stars-pay-button');
     if (starsPayButton) {
         starsPayButton.style.display = 'none';
@@ -149,25 +167,46 @@ function buyStars() {
 }
 
 function selectPackage(amount) {
-    const starsAmountElement = document.getElementById('starsAmount');
-    if (starsAmountElement) {
-        starsAmountElement.value = amount;
+    selectedPackage = allPackages.find(pkg => pkg.stars === amount);
+    const packages = document.querySelectorAll('.package');
+    packages.forEach(pkg => pkg.classList.remove('selected'));
+    
+    const selectedElement = document.querySelector(`.package[onclick="selectPackage(${amount})"]`);
+    if (selectedElement) {
+        selectedElement.classList.add('selected');
     }
     
     const payButton = document.getElementById('stars-pay-button');
     if (payButton) {
         payButton.style.display = 'block';
-        payButton.style.bottom = packagesExpanded ? '20px' : '20px';
+        const packagesSection = document.querySelector('.packages-section');
+        if (packagesSection) {
+            const packagesBottom = packagesSection.getBoundingClientRect().bottom;
+            const windowHeight = window.innerHeight;
+            const bottomOffset = windowHeight - packagesBottom;
+            if (bottomOffset < 160) { // Если пакеты занимают много места
+                payButton.style.position = 'relative';
+                payButton.style.bottom = 'auto';
+                payButton.style.marginTop = '20px';
+            } else {
+                payButton.style.position = 'fixed';
+                payButton.style.bottom = '80px';
+                payButton.style.marginTop = '0';
+            }
+        }
     }
 }
+
+let packagesExpanded = false;
 
 function showAllPackages() {
     const packagesContainer = document.querySelector('.packages');
     if (!packagesContainer) return;
     
-    const packagesWrapper = document.querySelector('.packages-wrapper');
     const button = document.querySelector('.show-more');
     if (!button) return;
+    
+    packagesExpanded = !packagesExpanded;
     
     if (packagesExpanded) {
         const packagesHtml = allPackages.map(pkg => `
@@ -181,10 +220,8 @@ function showAllPackages() {
         `).join('');
         
         packagesContainer.innerHTML = packagesHtml;
-        button.textContent = 'Скрыть пакеты';
-        if (packagesWrapper) {
-            packagesWrapper.classList.add('expanded');
-        }
+        button.textContent = currentLanguage === 'ru' ? 'Скрыть пакеты' : 'Hide packages';
+        packagesContainer.style.maxHeight = 'none';
     } else {
         const packagesHtml = allPackages.slice(0, 4).map(pkg => `
             <div class="package" onclick="selectPackage(${pkg.stars})">
@@ -197,22 +234,116 @@ function showAllPackages() {
         `).join('');
         
         packagesContainer.innerHTML = packagesHtml;
-        button.textContent = 'Показать все пакеты';
-        if (packagesWrapper) {
-            packagesWrapper.classList.remove('expanded');
+        button.textContent = currentLanguage === 'ru' ? 'Показать все пакеты' : 'Show all packages';
+        packagesContainer.style.maxHeight = '';
+    }
+}
+
+async function checkCurrentPrice() {
+    try {
+        const response = await fetch('/prices');
+        const prices = await response.json();
+        const currentPackage = prices.stars.packages.find(p => p.stars === selectedPackage.stars);
+        
+        if (currentPackage.price !== selectedPackage.price) {
+            tg.showPopup({
+                title: 'Цена изменилась',
+                message: `Цена на пакет ${selectedPackage.stars} звезд изменилась с ${selectedPackage.price}₽ на ${currentPackage.price}₽. Пожалуйста, выберите пакет заново.`,
+                buttons: [{text: 'OK', type: 'ok'}]
+            });
+            allPackages = prices.stars.packages;
+            showAllPackages();
+            return false;
         }
+        return true;
+    } catch (error) {
+        console.error('Error checking price:', error);
+        return false;
+    }
+}
+
+async function processStarsPayment() {
+    if (!selectedPackage) {
+        tg.showPopup({
+            title: 'Ошибка',
+            message: 'Пожалуйста, выберите пакет звезд',
+            buttons: [{text: 'OK', type: 'ok'}]
+        });
+        return;
+    }
+
+    // Проверяем актуальность цены перед оплатой
+    const priceIsValid = await checkCurrentPrice();
+    if (!priceIsValid) {
+        return;
+    }
+
+    const recipient = document.getElementById('recipient').value.trim();
+    const email = document.getElementById('email').value.trim();
+    const starsAmount = document.getElementById('starsAmount').value;
+    
+    let hasError = false;
+    
+    // Валидация получателя
+    if (!recipient) {
+        const recipientInput = document.getElementById('recipient');
+        recipientInput.classList.add('error-field');
+        const existingError = document.getElementById('recipient-error');
+        if (!existingError) {
+            const errorMsg = document.createElement('div');
+            errorMsg.id = 'recipient-error';
+            errorMsg.className = 'error-message';
+            errorMsg.textContent = currentLanguage === 'ru' ? 'Введите получателя' : 'Enter recipient';
+            const parentNode = recipientInput.parentNode;
+            if (parentNode) {
+                parentNode.appendChild(errorMsg);
+            }
+        }
+        hasError = true;
     }
     
-    packagesExpanded = !packagesExpanded;
-    
-    // Обновляем позицию кнопки оплаты
-    const payButton = document.getElementById('stars-pay-button');
-    if (payButton && payButton.style.display === 'block') {
-        if (packagesExpanded) {
-            payButton.style.bottom = '20px';
-        } else {
-            payButton.style.bottom = '20px';
+    // Валидация email
+    if (!email || !email.includes('@')) {
+        const emailInput = document.getElementById('email');
+        emailInput.classList.add('error-field');
+        const existingError = document.getElementById('email-error');
+        if (!existingError) {
+            const errorMsg = document.createElement('div');
+            errorMsg.id = 'email-error';
+            errorMsg.className = 'error-message';
+            errorMsg.textContent = currentLanguage === 'ru' ? 'Введите корректный email' : 'Enter valid email';
+            emailInput.parentNode.appendChild(errorMsg);
         }
+        hasError = true;
+    }
+    
+    // Валидация количества звезд
+    if (!starsAmount || starsAmount < 50 || starsAmount > 20000) {
+        const starsInput = document.getElementById('starsAmount');
+        starsInput.classList.add('error-field');
+        const existingError = document.getElementById('stars-error');
+        if (!existingError) {
+            const errorMsg = document.createElement('div');
+            errorMsg.id = 'stars-error';
+            errorMsg.className = 'error-message';
+            errorMsg.textContent = currentLanguage === 'ru' ? 'Введите количество от 50 до 20 000' : 'Enter amount between 50 and 20,000';
+            starsInput.parentNode.appendChild(errorMsg);
+        }
+        hasError = true;
+    }
+    
+    if (!hasError) {
+        // Отправляем данные на сервер или в Telegram Web App
+        tg.MainButton.text = currentLanguage === 'ru' ? 'ОПЛАТИТЬ' : 'PAY';
+        tg.MainButton.show();
+        tg.MainButton.onClick(() => {
+            tg.sendData(JSON.stringify({
+                action: 'buy_stars',
+                recipient: recipient,
+                email: email,
+                amount: parseInt(starsAmount)
+            }));
+        });
     }
 }
 
@@ -405,24 +536,20 @@ function contactSupport() {
     window.open('https://t.me/ooostyx', '_blank');
 }
 
-const allPackages = [
-    { stars: 50, price: 50, usd: 0.75 },
-    { stars: 75, price: 75, usd: 1.13 },
-    { stars: 100, price: 100, usd: 1.50 },
-    { stars: 150, price: 150, usd: 2.25 },
-    { stars: 250, price: 250, usd: 3.75 },
-    { stars: 350, price: 350, usd: 5.25 },
-    { stars: 500, price: 500, usd: 7.50 },
-    { stars: 750, price: 750, usd: 11.25 },
-    { stars: 1000, price: 1000, usd: 15 },
-    { stars: 1500, price: 1500, usd: 22.50 },
-    { stars: 2500, price: 2500, usd: 37.50 },
-    { stars: 5000, price: 5000, usd: 75 },
-    { stars: 10000, price: 10000, usd: 150 },
-    { stars: 25000, price: 25000, usd: 375 },
-    { stars: 35000, price: 35000, usd: 525 },
-    { stars: 50000, price: 50000, usd: 750 }
-];
+let allPackages = [];
+let selectedPackage = null;
+
+// Функция для загрузки актуальных цен
+async function loadPrices() {
+    try {
+        const response = await fetch('/prices');
+        const prices = await response.json();
+        allPackages = prices.stars.packages;
+        showAllPackages();
+    } catch (error) {
+        console.error('Error loading prices:', error);
+    }
+}
 
 // Реферальная система
 function initReferralSystem() {

@@ -567,52 +567,27 @@ async function loadPrices() {
     try {
         console.log('Начинаем загрузку цен...');
         
-        // URL вашего сервера
-        const baseUrl = window.location.hostname.includes('github.io') 
-            ? 'https://earnstars.onrender.com' 
-            : 'http://127.0.0.1:5000';
-            
-        try {
-            const response = await fetch(`${baseUrl}/prices`, {
-                method: 'GET',
-                headers: {
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json'
-                }
-            });
-            
-            if (!response.ok) {
-                throw new Error(`Ошибка загрузки: ${response.status}`);
-            }
-            
-            const prices = await response.json();
-            if (!prices || !prices.stars || !prices.stars.packages) {
-                throw new Error('Некорректный формат данных');
-            }
-            
-            allPackages = prices.stars.packages;
-            showAllPackages();
-            return;
-        } catch (serverError) {
-            console.log('Не удалось загрузить цены с сервера, пробуем локальный файл...', serverError);
-        }
-
-        // Пробуем загрузить локальный файл с ценами
-        const localResponse = await fetch('config/prices.json');
-        if (!localResponse.ok) {
-            throw new Error(`Ошибка загрузки локального файла: ${localResponse.status}`);
+        // Пытаемся загрузить цены с локального сервера
+        const response = await fetch('http://localhost:5000/prices');
+        
+        if (!response.ok) {
+            throw new Error(`Ошибка загрузки: ${response.status}`);
         }
         
-        const localPrices = await localResponse.json();
-        if (!localPrices || !localPrices.stars || !localPrices.stars.packages) {
-            throw new Error('Некорректный формат данных в локальном файле');
+        const prices = await response.json();
+        if (!prices || !prices.stars || !prices.stars.packages) {
+            throw new Error('Некорректный формат данных');
         }
         
-        allPackages = localPrices.stars.packages;
+        allPackages = prices.stars.packages;
         showAllPackages();
+        
+        // Запускаем периодическое обновление цен каждые 2 секунды
+        setTimeout(loadPrices, 2000);
     } catch (error) {
         console.error('Ошибка при загрузке цен:', error);
-        showError('Не удалось загрузить цены. Проверьте подключение к интернету и попробуйте обновить страницу.');
+        // В случае ошибки, пробуем снова через 2 секунды
+        setTimeout(loadPrices, 2000);
     }
 }
 

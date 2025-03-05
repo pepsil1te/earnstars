@@ -225,17 +225,14 @@ def webapp():
     </html>
     ''')
 
-@app.route('/prices')
+@app.route('/prices', methods=['GET'])
 def get_prices():
     try:
-        # Используем абсолютный путь к файлу
-        file_path = os.path.join(CURRENT_DIR, 'config', 'prices.json')
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open('config/prices.json', 'r', encoding='utf-8') as f:
             prices = json.load(f)
-            return jsonify(prices)
+        return jsonify(prices)
     except Exception as e:
-        print(f"Error loading prices: {str(e)}")  # Добавляем лог ошибки
-        return jsonify({'error': 'Failed to load prices'}), 500
+        return jsonify({'error': str(e)}), 500
 
 @bot.message_handler(commands=['start'])
 def start(message):
@@ -517,10 +514,16 @@ def update_premium_price(message):
 def back_to_start(message):
     start(message)
 
+def run_flask():
+    app.run(host='0.0.0.0', port=5000)
+
 if __name__ == '__main__':
-    import threading
-    # Запускаем Flask в отдельном потоке
-    threading.Thread(target=lambda: app.run(debug=False, use_reloader=False)).start()
+    # Запускаем Flask сервер в отдельном потоке
+    from threading import Thread
+    flask_thread = Thread(target=run_flask)
+    flask_thread.daemon = True  # Поток завершится вместе с основной программой
+    flask_thread.start()
+    
     # Запускаем бота
-    print("Бот EarnStars запущен!")
-    bot.polling(none_stop=True)
+    print("Бот запущен! Веб-сервер доступен по адресу http://localhost:5000")
+    bot.polling()

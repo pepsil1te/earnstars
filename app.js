@@ -581,12 +581,39 @@ async function loadPrices() {
         }
         
         allPackages = prices.stars.packages;
-        showAllPackages();
+        
+        // Если есть выбранный пакет, обновляем его цену
+        if (selectedPackage) {
+            selectedPackage = allPackages.find(pkg => pkg.stars === selectedPackage.stars) || selectedPackage;
+            updateSelectedPackageDisplay();
+        }
+        
+        // Обновляем отображение пакетов
+        const packagesContainer = document.querySelector('.packages');
+        if (packagesContainer) {
+            if (packagesExpanded) {
+                showAllPackages();
+            } else {
+                const packagesHtml = allPackages.slice(0, 3).map(pkg => `
+                    <div class="package" onclick="selectPackage(${pkg.stars})">
+                        <div class="package-stars">
+                            <img src="svg/star.svg" alt="star" class="star-icon">
+                            <span>${pkg.stars.toLocaleString()} звёзд</span>
+                        </div>
+                        <div class="package-price">${pkg.price} ₽ <span class="usd">~${pkg.usd} $</span></div>
+                    </div>
+                `).join('');
+                packagesContainer.innerHTML = packagesHtml;
+            }
+        }
     } catch (error) {
         console.error('Ошибка при загрузке цен:', error);
         showError('Не удалось загрузить цены. Попробуйте обновить страницу.');
     }
 }
+
+// Автоматическое обновление цен каждые 5 секунд
+setInterval(loadPrices, 5000);
 
 // Реферальная система
 function initReferralSystem() {

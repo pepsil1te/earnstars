@@ -567,8 +567,9 @@ async function loadPrices() {
     try {
         console.log('Начинаем загрузку цен...');
         
-        // Загружаем цены напрямую из GitHub
-        const response = await fetch('https://raw.githubusercontent.com/pepsil1te/earnstars/main/config/prices.json');
+        // Добавляем timestamp для обхода кэширования
+        const timestamp = new Date().getTime();
+        const response = await fetch(`https://raw.githubusercontent.com/pepsil1te/earnstars/main/config/prices.json?t=${timestamp}`);
         
         if (!response.ok) {
             throw new Error(`Ошибка загрузки: ${response.status}`);

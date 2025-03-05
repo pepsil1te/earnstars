@@ -3,8 +3,8 @@
         "packages": [
             {
                 "stars": 50,
-                "price": 60,
-                "usd": 0.65
+                "price": 70,
+                "usd": 0.76
             },
             {
                 "stars": 75,
@@ -81,7 +81,7 @@
     "gifts": {
         "heart": {
             "id": 1,
-            "price": 100,
+            "price": 200,
             "name": "Сердце"
         },
         "bear": {

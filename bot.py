@@ -14,9 +14,11 @@ bot = telebot.TeleBot(BOT_TOKEN)
 app = Flask(__name__)
 CORS(app, resources={
     r"/prices": {
-        "origins": ["https://pepsil1te.github.io", "http://127.0.0.1:5000"],
-        "methods": ["GET"],
-        "allow_headers": ["Content-Type"]
+        "origins": ["https://pepsil1te.github.io", "http://127.0.0.1:5000", "http://localhost:5000"],
+        "methods": ["GET", "OPTIONS"],
+        "allow_headers": ["Content-Type", "Authorization"],
+        "expose_headers": ["Content-Type"],
+        "supports_credentials": True
     }
 })
 

@@ -567,12 +567,8 @@ async function loadPrices() {
     try {
         console.log('Начинаем загрузку цен...');
         
-        // URL вашего сервера
-        const baseUrl = window.location.hostname.includes('github.io') 
-            ? 'https://earnstars.onrender.com' 
-            : 'http://127.0.0.1:5000';
-            
-        const response = await fetch(`${baseUrl}/prices`, {
+        // Всегда используем локальный сервер
+        const response = await fetch('http://127.0.0.1:5000/prices', {
             method: 'GET',
             headers: {
                 'Accept': 'application/json',
@@ -593,8 +589,7 @@ async function loadPrices() {
         showAllPackages();
     } catch (error) {
         console.error('Ошибка при загрузке цен:', error);
-        // Показываем ошибку пользователю
-        showError('Не удалось загрузить цены. Проверьте подключение к интернету и попробуйте обновить страницу.');
+        showError('Не удалось загрузить цены. Убедитесь, что локальный сервер запущен.');
     }
 }
 

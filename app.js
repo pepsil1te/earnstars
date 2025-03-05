@@ -254,7 +254,7 @@ async function checkCurrentPrice() {
     try {
         // Проверяем, запущено ли приложение на GitHub Pages
         const isGitHubPages = window.location.hostname.includes('github.io');
-        const response = await fetch(isGitHubPages ? 'https://raw.githubusercontent.com/pepsil1te/earnstars/main/config/prices.json' : '/prices');
+        const response = await fetch('https://raw.githubusercontent.com/pepsil1te/earnstars/main/config/prices.json');
         const prices = await response.json();
         const currentPackage = prices.stars.packages.find(p => p.stars === selectedPackage.stars);
         
@@ -555,9 +555,7 @@ let selectedPackage = null;
 // Функция для загрузки актуальных цен
 async function loadPrices() {
     try {
-        // Проверяем, запущено ли приложение на GitHub Pages
-        const isGitHubPages = window.location.hostname.includes('github.io');
-        const response = await fetch(isGitHubPages ? 'https://raw.githubusercontent.com/pepsil1te/earnstars/main/config/prices.json' : '/prices');
+        const response = await fetch('https://raw.githubusercontent.com/pepsil1te/earnstars/main/config/prices.json');
         const prices = await response.json();
         allPackages = prices.stars.packages;
         showAllPackages();

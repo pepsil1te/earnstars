@@ -202,13 +202,12 @@ label {
 }
 
 .packages {
-    margin-top: 16px;
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 16px;
-    max-height: 400px;
-    overflow: hidden;
-    transition: max-height 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 10px;
+    overflow: visible;
+    max-height: none;
 }
 
 .packages.expanded {

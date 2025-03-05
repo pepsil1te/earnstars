@@ -567,9 +567,8 @@ async function loadPrices() {
     try {
         console.log('Начинаем загрузку цен...');
         
-        // Добавляем timestamp для обхода кэширования
-        const timestamp = new Date().getTime();
-        const response = await fetch(`https://raw.githubusercontent.com/pepsil1te/earnstars/main/config/prices.json?t=${timestamp}`);
+        // Используем jsDelivr CDN, который автоматически обновляет контент при изменениях в GitHub
+        const response = await fetch('https://cdn.jsdelivr.net/gh/pepsil1te/earnstars/config/prices.json');
         
         if (!response.ok) {
             throw new Error(`Ошибка загрузки: ${response.status}`);
@@ -591,9 +590,8 @@ async function loadPrices() {
 // Функция для проверки актуальности цены перед оплатой
 async function verifyPrice() {
     try {
-        // Загружаем актуальные цены
-        const timestamp = new Date().getTime();
-        const response = await fetch(`https://raw.githubusercontent.com/pepsil1te/earnstars/main/config/prices.json?t=${timestamp}`);
+        // Используем тот же CDN для проверки цен
+        const response = await fetch('https://cdn.jsdelivr.net/gh/pepsil1te/earnstars/config/prices.json');
         
         if (!response.ok) {
             throw new Error(`Ошибка загрузки: ${response.status}`);

@@ -40,7 +40,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (premiumModal) {
         premiumModal.style.display = 'none';
     }
-    
+
+    // Загружаем цены при старте
     loadPrices();
 });
 
@@ -142,6 +143,7 @@ function buyForSelf() {
 
 function buyStars() {
     navigate('buy');
+    showAllPackages(); // Показываем пакеты сразу
     packagesExpanded = false;
     const packagesContainer = document.querySelector('.packages');
     if (packagesContainer) {
@@ -205,6 +207,12 @@ function showAllPackages() {
     
     const button = document.querySelector('.show-more');
     if (!button) return;
+
+    // Если пакеты еще не загружены, загрузим их
+    if (!allPackages || allPackages.length === 0) {
+        loadPrices();
+        return;
+    }
     
     packagesExpanded = !packagesExpanded;
     
@@ -221,7 +229,6 @@ function showAllPackages() {
         
         packagesContainer.innerHTML = packagesHtml;
         button.textContent = currentLanguage === 'ru' ? 'Скрыть пакеты' : 'Hide packages';
-        packagesContainer.style.maxHeight = 'none';
     } else {
         const packagesHtml = allPackages.slice(0, 4).map(pkg => `
             <div class="package" onclick="selectPackage(${pkg.stars})">
@@ -235,7 +242,6 @@ function showAllPackages() {
         
         packagesContainer.innerHTML = packagesHtml;
         button.textContent = currentLanguage === 'ru' ? 'Показать все пакеты' : 'Show all packages';
-        packagesContainer.style.maxHeight = '';
     }
 }
 
@@ -550,6 +556,7 @@ async function loadPrices() {
         const prices = await response.json();
         allPackages = prices.stars.packages;
         showAllPackages();
+        console.log('Prices loaded:', allPackages); // Добавляем лог для отладки
     } catch (error) {
         console.error('Error loading prices:', error);
     }

@@ -81,7 +81,7 @@
     "gifts": {
         "heart": {
             "id": 1,
-            "price": 200.0,
+            "price": 150.0,
             "name": "Сердце"
         },
         "bear": {
@@ -104,7 +104,7 @@
         "packages": [
             {
                 "duration": 1,
-                "price": 500.0,
+                "price": 600.0,
                 "name": "1 месяц"
             },
             {

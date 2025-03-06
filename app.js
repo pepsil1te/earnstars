@@ -493,23 +493,81 @@ async function verifyPrice() {
     }
 }
 
+// Определяем URL сервера
+const SERVER_URL = window.location.hostname === 'pepsil1te.github.io' 
+    ? 'http://192.168.0.102:5000' // Замените на ваш IP-адрес
+    : 'http://localhost:5000';
+
 async function loadPrices() {
     try {
         console.log('Загрузка цен...');
         
-        // Используем относительный путь вместо localhost
-        const response = await fetch('/prices');
+        // Используем динамический URL сервера
+        const response = await fetch(`${SERVER_URL}/prices`);
+        
         if (!response.ok) {
             throw new Error(`Ошибка загрузки: ${response.status}`);
         }
+        
         const prices = await response.json();
+        if (!prices) {
+            throw new Error('Некорректный формат данных');
+        }
+        
+        // Загружаем цены звезд
         allPackages = prices.stars.packages;
         showAllPackages();
+        
+        // Загружаем цены подарков
+        giftPrices = prices.gifts;
+        updateGiftPrices();
+        
+        // Загружаем цены премиум
+        premiumPrices = prices.premium.packages;
+        updatePremiumPrices();
+        
     } catch (error) {
         console.error('Ошибка при загрузке цен:', error);
         document.querySelector('.error-message').textContent = 'Не удалось загрузить цены. Пожалуйста, попробуйте позже.';
     }
 }
+
+function updateGiftPrices() {
+    // Обновляем цены подарков на странице
+    const heartPrice = document.querySelector('.heart-price');
+    const bearPrice = document.querySelector('.bear-price');
+    const flowerPrice = document.querySelector('.flower-price');
+    
+    if (heartPrice && giftPrices.heart) {
+        heartPrice.textContent = `${giftPrices.heart.price} ₽`;
+    }
+    if (bearPrice && giftPrices.bear) {
+        bearPrice.textContent = `${giftPrices.bear.price} ₽`;
+    }
+    if (flowerPrice && giftPrices.flower) {
+        flowerPrice.textContent = `${giftPrices.flower.price} ₽`;
+    }
+}
+
+function updatePremiumPrices() {
+    // Обновляем цены премиум пакетов на странице
+    const premiumContainer = document.querySelector('.premium-packages');
+    if (!premiumContainer || !premiumPrices) return;
+    
+    premiumPrices.forEach((pkg, index) => {
+        const priceElement = document.querySelector(`.premium-price-${index}`);
+        if (priceElement) {
+            priceElement.textContent = `${pkg.price} ₽`;
+        }
+    });
+}
+
+// Загружаем цены при загрузке страницы
+document.addEventListener('DOMContentLoaded', () => {
+    loadPrices();
+    // Обновляем цены каждые 30 секунд
+    setInterval(loadPrices, 30000);
+});
 
 // Функция для обработки платежа
 async function processStarsPayment() {
@@ -608,6 +666,8 @@ function inviteFriends() {
 }
 
 let allPackages = [];
+let giftPrices = {};
+let premiumPrices = [];
 let selectedPackage = null;
 
 // Функции для Premium

@@ -140,25 +140,30 @@
             <h1>Подарки</h1>
         </div>
         <div class="gift-grid">
-            <div class="gift-item" onclick="showGiftModal('heart', 100)">
+            <div class="gift-item" onclick="showGiftModal('heart', giftPrices.heart.price)">
                 <div class="gift-container" id="heart-animation"></div>
                 <div class="gift-name">Сердце</div>
-                <div class="gift-price"><img src="svg/star.svg" alt="star" class="star-icon">100</div>
+                <div class="gift-price heart-price">100 ₽</div>
             </div>
-            <div class="gift-item" onclick="showGiftModal('bear', 200)">
+            <div class="gift-item" onclick="showGiftModal('bear', giftPrices.bear.price)">
                 <div class="gift-container" id="bear-animation"></div>
                 <div class="gift-name">Мишка</div>
-                <div class="gift-price"><img src="svg/star.svg" alt="star" class="star-icon">200</div>
+                <div class="gift-price bear-price">200 ₽</div>
             </div>
-            <div class="gift-item" onclick="showGiftModal('present', 150)">
+            <div class="gift-item" onclick="showGiftModal('flower', giftPrices.flower.price)">
+                <div class="gift-container" id="flower-animation"></div>
+                <div class="gift-name">Цветок</div>
+                <div class="gift-price flower-price">150 ₽</div>
+            </div>
+            <div class="gift-item" onclick="showGiftModal('present', giftPrices.present.price)">
                 <div class="gift-container" id="present-animation"></div>
                 <div class="gift-name">Подарок</div>
-                <div class="gift-price"><img src="svg/star.svg" alt="star" class="star-icon">150</div>
+                <div class="gift-price present-price">150 ₽</div>
             </div>
-            <div class="gift-item" onclick="showGiftModal('ring', 300)">
+            <div class="gift-item" onclick="showGiftModal('ring', giftPrices.ring.price)">
                 <div class="gift-container" id="ring-animation"></div>
                 <div class="gift-name">Кольцо</div>
-                <div class="gift-price"><img src="svg/star.svg" alt="star" class="star-icon">300</div>
+                <div class="gift-price ring-price">300 ₽</div>
             </div>
         </div>
     </div>
@@ -216,26 +221,17 @@
                 <input type="email" id="premium-email" placeholder="email@example.com" required>
             </div>
             <div class="premium-packages">
-                <div class="premium-package" onclick="selectPremiumPackage(this, 3, 1340)">
-                    <div class="premium-package-duration">3 месяца</div>
-                    <div class="premium-package-price">
-                        1 340 ₽
-                        <span class="premium-package-usd">~13.4 $</span>
-                    </div>
+                <div class="premium-package">
+                    <div class="premium-duration">1 месяц</div>
+                    <div class="premium-price premium-price-0">600 ₽</div>
                 </div>
-                <div class="premium-package" onclick="selectPremiumPackage(this, 6, 1800)">
-                    <div class="premium-package-duration">6 месяцев</div>
-                    <div class="premium-package-price">
-                        1 800 ₽
-                        <span class="premium-package-usd">~18 $</span>
-                    </div>
+                <div class="premium-package">
+                    <div class="premium-duration">6 месяцев</div>
+                    <div class="premium-price premium-price-1">3000 ₽</div>
                 </div>
-                <div class="premium-package" onclick="selectPremiumPackage(this, 12, 3380)">
-                    <div class="premium-package-duration">12 месяцев</div>
-                    <div class="premium-package-price">
-                        3 380 ₽
-                        <span class="premium-package-usd">~33.8 $</span>
-                    </div>
+                <div class="premium-package">
+                    <div class="premium-duration">12 месяцев</div>
+                    <div class="premium-price premium-price-2">5500 ₽</div>
                 </div>
             </div>
             <button class="button primary" id="premium-pay-button" style="display: none;" onclick="processPremiumPayment()">Оплатить</button>

@@ -13,7 +13,17 @@ import requests
 load_dotenv()
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, resources={
+    r"/prices": {
+        "origins": [
+            "https://pepsil1te.github.io",
+            "http://localhost:5000",
+            "http://127.0.0.1:5000"
+        ],
+        "methods": ["GET"],
+        "allow_headers": ["Content-Type"]
+    }
+})
 
 # Путь к файлу с ценами
 PRICES_FILE = os.path.join(os.path.dirname(__file__), 'config', 'prices.json')

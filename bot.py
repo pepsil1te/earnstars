@@ -9,6 +9,7 @@ import threading
 import base64
 import requests
 import time
+import shutil
 
 # Загружаем переменные окружения
 load_dotenv()
@@ -44,8 +45,12 @@ def load_prices():
 def save_prices(prices):
     """Сохраняет цены в JSON файл"""
     try:
+        # Сохраняем в config/prices.json
         with open(PRICES_FILE, 'w', encoding='utf-8') as f:
             json.dump(prices, f, indent=4, ensure_ascii=False)
+            
+        # Копируем файл в корневую папку
+        shutil.copy2(PRICES_FILE, 'prices.json')
         return True
     except Exception as e:
         print(f"Ошибка при сохранении цен: {e}")
@@ -443,6 +448,11 @@ def set_server_url(message):
         bot.reply_to(message, "Использование: /seturl <url>\nПример: /seturl http://192.168.0.102:5000")
     except Exception as e:
         bot.reply_to(message, f"Произошла ошибка: {str(e)}")
+
+try:
+    shutil.copy2(PRICES_FILE, 'prices.json')
+except Exception as e:
+    print(f"Ошибка при копировании prices.json: {e}")
 
 if __name__ == '__main__':
     # Запускаем Flask сервер в отдельном потоке

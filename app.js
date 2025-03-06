@@ -494,15 +494,15 @@ async function verifyPrice() {
 
 // Определяем базовый URL в зависимости от окружения
 const BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-    ? ''  // Для локальной разработки используем относительные пути
-    : 'https://pepsil1te.github.io/earnstars';  // Для GitHub Pages используем полный путь
+    ? ''  // Для локальной разработки
+    : 'https://pepsil1te.github.io/earnstars';  // Для GitHub Pages
 
 async function loadPrices() {
     try {
         console.log('Загрузка цен...');
         
-        // Загружаем цены, используя базовый URL
-        const response = await fetch('http://localhost:5000/prices');
+        // Загружаем цены из файла в корневой папке
+        const response = await fetch('prices.json');
         
         if (!response.ok) {
             throw new Error(`Ошибка загрузки: ${response.status}`);
@@ -529,6 +529,63 @@ async function loadPrices() {
         console.error('Ошибка при загрузке цен:', error);
         document.querySelector('.error-message').textContent = 'Не удалось загрузить цены. Пожалуйста, попробуйте позже.';
     }
+}
+
+// Загружаем цены при загрузке страницы
+document.addEventListener('DOMContentLoaded', loadPrices);
+
+// Функции для покупки звезд и подарков
+function buyStars(packageIndex) {
+    const selectedPackage = allPackages[packageIndex];
+    if (!selectedPackage) {
+        console.error('Пакет не найден');
+        return;
+    }
+    
+    const amount = selectedPackage.price;
+    const stars = selectedPackage.stars;
+    
+    // Отправляем запрос на оплату
+    tg.sendData(JSON.stringify({
+        action: 'buy_stars',
+        amount: amount,
+        stars: stars
+    }));
+}
+
+function buyGift(giftType) {
+    const gift = giftPrices[giftType];
+    if (!gift) {
+        console.error('Подарок не найден');
+        return;
+    }
+    
+    const amount = gift.price;
+    
+    // Отправляем запрос на оплату
+    tg.sendData(JSON.stringify({
+        action: 'buy_gift',
+        gift_type: giftType,
+        amount: amount
+    }));
+}
+
+function buyPremium(packageIndex) {
+    const selectedPackage = premiumPrices[packageIndex];
+    if (!selectedPackage) {
+        console.error('Премиум пакет не найден');
+        return;
+    }
+    
+    const amount = selectedPackage.price;
+    const days = selectedPackage.days;
+    
+    // Отправляем запрос на оплату
+    tg.sendData(JSON.stringify({
+        action: 'buy_premium',
+        amount: amount,
+        days: days
+    }));
 }
 
 // Функции для покупки звезд
@@ -730,6 +787,3 @@ function updatePremiumPrices() {
         }
     });
 }
-
-// Инициализация при загрузке страницы
-document.addEventListener('DOMContentLoaded', loadPrices);

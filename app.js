@@ -278,7 +278,7 @@ async function processStarsPayment() {
     }
 
     // Проверяем актуальность цены перед оплатой
-    const priceIsValid = await checkCurrentPrice();
+    const priceIsValid = await verifyPrice();
     if (!priceIsValid) {
         return;
     }
@@ -454,34 +454,166 @@ function updateCharCounter(textarea) {
     }
 }
 
-function processGiftPayment() {
-    if (!currentGift) return;
-
-    const recipient = document.getElementById('gift-recipient').value;
-    const email = document.getElementById('gift-email').value;
-    const message = document.getElementById('gift-message').value;
-
-    if (!recipient || !email) {
-        tg.showAlert('Пожалуйста, заполните все обязательные поля');
-        return;
-    }
-
-    // Здесь будет логика оплаты
-    tg.showAlert(`Покупка подарка ${currentGift.type} для ${recipient}\nСумма: ${currentGift.price} звезд`);
-    hideGiftModal();
-}
-
-function buyGift() {
-    navigate('gifts');
-}
-
-function selectGift(type) {
-    tg.showConfirm('Купить подарок?', (confirmed) => {
-        if (confirmed) {
-            tg.showAlert('Функция покупки подарков скоро будет доступна!');
+async function verifyPrice() {
+    try {
+        // Загружаем актуальные цены перед оплатой
+        const response = await fetch('http://localhost:5000/prices');
+        
+        if (!response.ok) {
+            throw new Error(`Ошибка загрузки: ${response.status}`);
         }
-    });
+        
+        const prices = await response.json();
+        if (!prices || !prices.stars || !prices.stars.packages) {
+            throw new Error('Некорректный формат данных');
+        }
+        
+        // Проверяем цену выбранного пакета
+        const actualPackage = prices.stars.packages.find(pkg => pkg.stars === selectedPackage.stars);
+        if (!actualPackage) {
+            throw new Error('Выбранный пакет больше не доступен');
+        }
+        
+        // Если цена изменилась, обновляем данные и показываем уведомление
+        if (actualPackage.price !== selectedPackage.price) {
+            selectedPackage = actualPackage;
+            allPackages = prices.stars.packages;
+            showAllPackages();
+            updateSelectedPackageDisplay();
+            showError('Цена пакета была обновлена. Пожалуйста, проверьте новую стоимость.');
+            return false;
+        }
+        
+        return true;
+    } catch (error) {
+        console.error('Ошибка при проверке цены:', error);
+        showError('Не удалось проверить актуальность цены. Попробуйте еще раз.');
+        return false;
+    }
 }
+
+async function loadPrices() {
+    try {
+        console.log('Загрузка цен...');
+        
+        // Загружаем цены с локального сервера
+        const response = await fetch('http://localhost:5000/prices');
+        
+        if (!response.ok) {
+            throw new Error(`Ошибка загрузки: ${response.status}`);
+        }
+        
+        const prices = await response.json();
+        if (!prices || !prices.stars || !prices.stars.packages) {
+            throw new Error('Некорректный формат данных');
+        }
+        
+        allPackages = prices.stars.packages;
+        showAllPackages();
+    } catch (error) {
+        console.error('Ошибка при загрузке цен:', error);
+        showError('Не удалось загрузить цены. Проверьте подключение к серверу и обновите страницу.');
+    }
+}
+
+// Функция для обработки платежа
+async function processStarsPayment() {
+    try {
+        // Проверяем корректность данных
+        const recipient = document.getElementById('recipient').value.trim();
+        const starsAmount = parseInt(document.getElementById('starsAmount').value);
+        
+        if (!recipient) {
+            showError('Укажите получателя');
+            return;
+        }
+        
+        if (!selectedPackage || !starsAmount) {
+            showError('Выберите количество звезд');
+            return;
+        }
+        
+        // Проверяем актуальность цены перед оплатой
+        const priceIsValid = await verifyPrice();
+        if (!priceIsValid) {
+            return;
+        }
+        
+        // Формируем данные для оплаты
+        const data = {
+            recipient: recipient,
+            stars: starsAmount,
+            price: selectedPackage.price
+        };
+        
+        // Отправляем в telegram-web-app
+        tg.sendData(JSON.stringify(data));
+        tg.close();
+        
+    } catch (error) {
+        console.error('Ошибка при обработке платежа:', error);
+        showError('Произошла ошибка при обработке платежа');
+    }
+}
+
+// Реферальная система
+function initReferralSystem() {
+    if (tg.initDataUnsafe.user) {
+        const userId = tg.initDataUnsafe.user.id;
+        const referralLink = `https://t.me/EarnStarsBot?start=ref${userId}`;
+        
+        // Загружаем статистику из localStorage
+        const referralStats = {
+            count: parseInt(localStorage.getItem('referralCount') || '0'),
+            stars: parseInt(localStorage.getItem('referralStars') || '0')
+        };
+        
+        updateReferralStats(referralStats);
+    }
+}
+
+function updateReferralStats(stats) {
+    const referralCountElement = document.getElementById('referralCount');
+    if (referralCountElement) {
+        referralCountElement.textContent = stats.count;
+    }
+    const referralStarsElement = document.getElementById('referralStars');
+    if (referralStarsElement) {
+        referralStarsElement.textContent = `${stats.stars} ⭐`;
+    }
+}
+
+function copyReferralLink() {
+    if (tg.initDataUnsafe.user) {
+        const userId = tg.initDataUnsafe.user.id;
+        const referralLink = `https://t.me/EarnStarsBot?start=ref${userId}`;
+        
+        navigator.clipboard.writeText(referralLink)
+            .then(() => {
+                tg.showPopup({
+                    title: 'Успешно!',
+                    message: 'Реферальная ссылка скопирована в буфер обмена'
+                });
+            })
+            .catch(() => {
+                tg.showPopup({
+                    title: 'Ошибка',
+                    message: 'Не удалось скопировать ссылку'
+                });
+            });
+    }
+}
+
+function inviteFriends() {
+    if (tg.initDataUnsafe.user) {
+        const userId = tg.initDataUnsafe.user.id;
+        const referralLink = `https://t.me/EarnStarsBot?start=ref${userId}`;
+        tg.shareUrl(referralLink);
+    }
+}
+
+let allPackages = [];
+let selectedPackage = null;
 
 // Функции для Premium
 let selectedPremiumPackage = null;
@@ -562,115 +694,31 @@ function updateSelectedPackageDisplay() {
     }
 }
 
-// Функция для загрузки актуальных цен
-async function loadPrices() {
-    try {
-        console.log('Начинаем загрузку цен...');
-        
-        // URL вашего сервера
-        const baseUrl = window.location.hostname.includes('github.io') 
-            ? 'https://earnstars.onrender.com' 
-            : 'http://127.0.0.1:5000';
-            
-        try {
-            const response = await fetch(`${baseUrl}/prices`, {
-                method: 'GET',
-                headers: {
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json'
-                }
-            });
-            
-            if (!response.ok) {
-                throw new Error(`Ошибка загрузки: ${response.status}`);
-            }
-            
-            const prices = await response.json();
-            if (!prices || !prices.stars || !prices.stars.packages) {
-                throw new Error('Некорректный формат данных');
-            }
-            
-            allPackages = prices.stars.packages;
-            showAllPackages();
-            return;
-        } catch (serverError) {
-            console.log('Не удалось загрузить цены с сервера, пробуем локальный файл...', serverError);
+function buyGift() {
+    navigate('gifts');
+}
+
+function selectGift(type) {
+    tg.showConfirm('Купить подарок?', (confirmed) => {
+        if (confirmed) {
+            tg.showAlert('Функция покупки подарков скоро будет доступна!');
         }
-
-        // Пробуем загрузить локальный файл с ценами
-        const localResponse = await fetch('config/prices.json');
-        if (!localResponse.ok) {
-            throw new Error(`Ошибка загрузки локального файла: ${localResponse.status}`);
-        }
-        
-        const localPrices = await localResponse.json();
-        if (!localPrices || !localPrices.stars || !localPrices.stars.packages) {
-            throw new Error('Некорректный формат данных в локальном файле');
-        }
-        
-        allPackages = localPrices.stars.packages;
-        showAllPackages();
-    } catch (error) {
-        console.error('Ошибка при загрузке цен:', error);
-        showError('Не удалось загрузить цены. Проверьте подключение к интернету и попробуйте обновить страницу.');
-    }
+    });
 }
 
-// Реферальная система
-function initReferralSystem() {
-    if (tg.initDataUnsafe.user) {
-        const userId = tg.initDataUnsafe.user.id;
-        const referralLink = `https://t.me/EarnStarsBot?start=ref${userId}`;
-        
-        // Загружаем статистику из localStorage
-        const referralStats = {
-            count: parseInt(localStorage.getItem('referralCount') || '0'),
-            stars: parseInt(localStorage.getItem('referralStars') || '0')
-        };
-        
-        updateReferralStats(referralStats);
-    }
-}
+function processGiftPayment() {
+    if (!currentGift) return;
 
-function updateReferralStats(stats) {
-    const referralCountElement = document.getElementById('referralCount');
-    if (referralCountElement) {
-        referralCountElement.textContent = stats.count;
-    }
-    const referralStarsElement = document.getElementById('referralStars');
-    if (referralStarsElement) {
-        referralStarsElement.textContent = `${stats.stars} ⭐`;
-    }
-}
+    const recipient = document.getElementById('gift-recipient').value;
+    const email = document.getElementById('gift-email').value;
+    const message = document.getElementById('gift-message').value;
 
-function copyReferralLink() {
-    if (tg.initDataUnsafe.user) {
-        const userId = tg.initDataUnsafe.user.id;
-        const referralLink = `https://t.me/EarnStarsBot?start=ref${userId}`;
-        
-        navigator.clipboard.writeText(referralLink)
-            .then(() => {
-                tg.showPopup({
-                    title: 'Успешно!',
-                    message: 'Реферальная ссылка скопирована в буфер обмена'
-                });
-            })
-            .catch(() => {
-                tg.showPopup({
-                    title: 'Ошибка',
-                    message: 'Не удалось скопировать ссылку'
-                });
-            });
+    if (!recipient || !email) {
+        tg.showAlert('Пожалуйста, заполните все обязательные поля');
+        return;
     }
-}
 
-function inviteFriends() {
-    if (tg.initDataUnsafe.user) {
-        const userId = tg.initDataUnsafe.user.id;
-        const referralLink = `https://t.me/EarnStarsBot?start=ref${userId}`;
-        tg.shareUrl(referralLink);
-    }
+    // Здесь будет логика оплаты
+    tg.showAlert(`Покупка подарка ${currentGift.type} для ${recipient}\nСумма: ${currentGift.price} звезд`);
+    hideGiftModal();
 }
-
-let allPackages = [];
-let selectedPackage = null;

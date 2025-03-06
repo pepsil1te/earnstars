@@ -38,8 +38,8 @@
             },
             {
                 "stars": 1000,
-                "price": 1000,
-                "usd": 15.0
+                "price": 1300.0,
+                "usd": 14.48
             },
             {
                 "stars": 1500,
@@ -81,7 +81,7 @@
     "gifts": {
         "heart": {
             "id": 1,
-            "price": 120.0,
+            "price": 150.0,
             "name": "Сердце"
         },
         "bear": {
@@ -104,7 +104,7 @@
         "packages": [
             {
                 "duration": 1,
-                "price": 600.0,
+                "price": 500.0,
                 "name": "1 месяц"
             },
             {

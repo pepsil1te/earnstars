@@ -113,12 +113,26 @@ def update_premium_price(package_index, new_price):
 bot = telebot.TeleBot(os.getenv('BOT_TOKEN'))
 
 @bot.message_handler(commands=['start'])
-def start(message):
-    if message.from_user.id != int(os.getenv('ADMIN_ID')):
-        bot.reply_to(message, "Извините, у вас нет доступа к этому боту.")
-        return
+def send_welcome(message):
+    """Отправляет приветственное сообщение и кнопку для открытия приложения"""
+    markup = telebot.types.InlineKeyboardMarkup()
+    webapp_btn = telebot.types.InlineKeyboardButton(
+        text="Открыть",
+        web_app=telebot.types.WebAppInfo(url="https://pepsil1te.github.io/earnstars/")
+    )
+    markup.add(webapp_btn)
     
-    bot.reply_to(message, "Привет! Используйте команду /admin для управления ценами.")
+    welcome_text = """👋 Привет! Я бот для покупки и заработка Telegram Stars.
+
+🌟 С моей помощью вы можете:
+• Покупать звезды для себя или друзей
+• Дарить подарки
+• Покупать Telegram Premium
+• Зарабатывать на рефералах
+
+Нажмите кнопку "Открыть" чтобы начать!"""
+    
+    bot.send_message(message.chat.id, welcome_text, reply_markup=markup)
 
 @bot.message_handler(commands=['admin'])
 def admin_panel(message):

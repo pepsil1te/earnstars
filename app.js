@@ -41,8 +41,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         premiumModal.style.display = 'none';
     }
 
-    // Загружаем конфигурацию сервера
-    await loadServerConfig();
     loadPrices();
     // Обновляем цены каждые 30 секунд
     setInterval(loadPrices, 30000);
@@ -515,8 +513,8 @@ async function loadPrices() {
     try {
         console.log('Загрузка цен...');
         
-        // Используем URL из конфигурации
-        const response = await fetch(`${SERVER_URL}/prices`);
+        // Используем относительный путь к файлу с ценами
+        const response = await fetch('/config/prices.json');
         
         if (!response.ok) {
             throw new Error(`Ошибка загрузки: ${response.status}`);

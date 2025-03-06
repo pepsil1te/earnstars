@@ -8,6 +8,7 @@ from flask_sqlalchemy import SQLAlchemy
 import threading
 import base64
 import requests
+import time
 
 # Загружаем переменные окружения
 load_dotenv()
@@ -15,11 +16,7 @@ load_dotenv()
 app = Flask(__name__)
 CORS(app, resources={
     r"/prices": {
-        "origins": [
-            "https://pepsil1te.github.io",
-            "http://localhost:5000",
-            "http://127.0.0.1:5000"
-        ],
+        "origins": "*",  # Разрешаем запросы с любого домена
         "methods": ["GET"],
         "allow_headers": ["Content-Type"]
     }
@@ -435,10 +432,15 @@ def set_server_url(message):
         bot.reply_to(message, f"Произошла ошибка: {str(e)}")
 
 if __name__ == '__main__':
-    # Запускаем Flask сервер в отдельном потоке
+    # Запускаем Flask сервер в отдельном потоке на всех интерфейсах
     flask_thread = threading.Thread(target=app.run, kwargs={'host': '0.0.0.0', 'port': 5000})
     flask_thread.daemon = True
     flask_thread.start()
     
-    print("Бот запущен! Веб-сервер доступен по адресу http://localhost:5000")
-    bot.polling()
+    # Запускаем бота
+    while True:
+        try:
+            bot.polling(none_stop=True)
+        except Exception as e:
+            print(f"Ошибка в работе бота: {e}")
+            time.sleep(5)

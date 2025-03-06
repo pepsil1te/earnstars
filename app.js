@@ -494,27 +494,16 @@ async function verifyPrice() {
     }
 }
 
-// Определяем URL сервера
-let SERVER_URL = 'http://localhost:5000';
-
-async function loadServerConfig() {
-    try {
-        const response = await fetch('/config/server_config.json');
-        const config = await response.json();
-        SERVER_URL = window.location.hostname === 'pepsil1te.github.io' 
-            ? config.production.server_url 
-            : config.development.server_url;
-    } catch (error) {
-        console.error('Ошибка загрузки конфигурации:', error);
-    }
-}
+// Определяем URL сервера для разных устройств
+const SERVER_URL = window.location.hostname === 'pepsil1te.github.io'
+    ? 'http://192.168.0.102:5000'  // Замените на IP вашего компьютера
+    : 'http://localhost:5000';
 
 async function loadPrices() {
     try {
         console.log('Загрузка цен...');
         
-        // Используем относительный путь к файлу с ценами
-        const response = await fetch('/config/prices.json');
+        const response = await fetch(`${SERVER_URL}/prices`);
         
         if (!response.ok) {
             throw new Error(`Ошибка загрузки: ${response.status}`);
@@ -541,36 +530,6 @@ async function loadPrices() {
         console.error('Ошибка при загрузке цен:', error);
         document.querySelector('.error-message').textContent = 'Не удалось загрузить цены. Пожалуйста, попробуйте позже.';
     }
-}
-
-function updateGiftPrices() {
-    // Обновляем цены подарков на странице
-    const heartPrice = document.querySelector('.heart-price');
-    const bearPrice = document.querySelector('.bear-price');
-    const flowerPrice = document.querySelector('.flower-price');
-    
-    if (heartPrice && giftPrices.heart) {
-        heartPrice.textContent = `${giftPrices.heart.price} ₽`;
-    }
-    if (bearPrice && giftPrices.bear) {
-        bearPrice.textContent = `${giftPrices.bear.price} ₽`;
-    }
-    if (flowerPrice && giftPrices.flower) {
-        flowerPrice.textContent = `${giftPrices.flower.price} ₽`;
-    }
-}
-
-function updatePremiumPrices() {
-    // Обновляем цены премиум пакетов на странице
-    const premiumContainer = document.querySelector('.premium-packages');
-    if (!premiumContainer || !premiumPrices) return;
-    
-    premiumPrices.forEach((pkg, index) => {
-        const priceElement = document.querySelector(`.premium-price-${index}`);
-        if (priceElement) {
-            priceElement.textContent = `${pkg.price} ₽`;
-        }
-    });
 }
 
 // Функции для покупки звезд
@@ -741,4 +700,34 @@ function inviteFriends() {
         const referralLink = `https://t.me/EarnStarsBot?start=ref${userId}`;
         tg.shareUrl(referralLink);
     }
+}
+
+function updateGiftPrices() {
+    // Обновляем цены подарков на странице
+    const heartPrice = document.querySelector('.heart-price');
+    const bearPrice = document.querySelector('.bear-price');
+    const flowerPrice = document.querySelector('.flower-price');
+    
+    if (heartPrice && giftPrices.heart) {
+        heartPrice.textContent = `${giftPrices.heart.price} ₽`;
+    }
+    if (bearPrice && giftPrices.bear) {
+        bearPrice.textContent = `${giftPrices.bear.price} ₽`;
+    }
+    if (flowerPrice && giftPrices.flower) {
+        flowerPrice.textContent = `${giftPrices.flower.price} ₽`;
+    }
+}
+
+function updatePremiumPrices() {
+    // Обновляем цены премиум пакетов на странице
+    const premiumContainer = document.querySelector('.premium-packages');
+    if (!premiumContainer || !premiumPrices) return;
+    
+    premiumPrices.forEach((pkg, index) => {
+        const priceElement = document.querySelector(`.premium-price-${index}`);
+        if (priceElement) {
+            priceElement.textContent = `${pkg.price} ₽`;
+        }
+    });
 }

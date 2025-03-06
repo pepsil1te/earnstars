@@ -81,7 +81,7 @@
     "gifts": {
         "heart": {
             "id": 1,
-            "price": 150.0,
+            "price": 120.0,
             "name": "Сердце"
         },
         "bear": {

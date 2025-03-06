@@ -28,6 +28,9 @@ CORS(app, resources={
 # Путь к файлу с ценами
 PRICES_FILE = os.path.join(os.path.dirname(__file__), 'config', 'prices.json')
 
+# Путь к файлу конфигурации
+SERVER_CONFIG_FILE = os.path.join(os.path.dirname(__file__), 'config', 'server_config.json')
+
 def load_prices():
     """Загружает цены из JSON файла"""
     with open(PRICES_FILE, 'r', encoding='utf-8') as f:
@@ -37,6 +40,26 @@ def save_prices(prices):
     """Сохраняет цены в JSON файл"""
     with open(PRICES_FILE, 'w', encoding='utf-8') as f:
         json.dump(prices, f, indent=4, ensure_ascii=False)
+
+def load_server_config():
+    try:
+        with open(SERVER_CONFIG_FILE, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except Exception as e:
+        print(f"Ошибка при загрузке конфигурации сервера: {e}")
+        return {
+            "development": {"server_url": "http://localhost:5000"},
+            "production": {"server_url": "http://localhost:5000"}
+        }
+
+def save_server_config(config):
+    try:
+        with open(SERVER_CONFIG_FILE, 'w', encoding='utf-8') as f:
+            json.dump(config, f, indent=4, ensure_ascii=False)
+        return True
+    except Exception as e:
+        print(f"Ошибка при сохранении конфигурации сервера: {e}")
+        return False
 
 @app.route('/prices', methods=['GET'])
 def get_prices():
@@ -364,6 +387,38 @@ def get_usd_rate():
             return data['Valute']['USD']['Value']
     except:
         return 90.0  # Фиксированный курс если API недоступен
+
+@bot.message_handler(commands=['seturl'])
+def set_server_url(message):
+    if str(message.from_user.id) != os.getenv('ADMIN_ID'):
+        bot.reply_to(message, "У вас нет прав для выполнения этой команды")
+        return
+
+    try:
+        # Получаем URL из сообщения
+        url = message.text.split(maxsplit=1)[1].strip()
+        
+        # Проверяем формат URL
+        if not url.startswith(('http://', 'https://')):
+            bot.reply_to(message, "URL должен начинаться с http:// или https://")
+            return
+            
+        # Загружаем текущую конфигурацию
+        config = load_server_config()
+        
+        # Обновляем URL в конфигурации
+        config['production']['server_url'] = url
+        
+        # Сохраняем конфигурацию
+        if save_server_config(config):
+            bot.reply_to(message, f"URL сервера успешно обновлен на: {url}")
+        else:
+            bot.reply_to(message, "Ошибка при сохранении конфигурации")
+            
+    except IndexError:
+        bot.reply_to(message, "Использование: /seturl <url>\nПример: /seturl http://192.168.0.102:5000")
+    except Exception as e:
+        bot.reply_to(message, f"Произошла ошибка: {str(e)}")
 
 if __name__ == '__main__':
     # Запускаем Flask сервер в отдельном потоке

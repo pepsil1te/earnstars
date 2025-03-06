@@ -9,6 +9,9 @@ import threading
 import base64
 import requests
 
+# Загружаем переменные окружения
+load_dotenv()
+
 app = Flask(__name__)
 CORS(app)
 
@@ -27,8 +30,10 @@ def save_prices(prices):
 
 @app.route('/prices', methods=['GET'])
 def get_prices():
+    """Возвращает все цены"""
     try:
-        return jsonify(load_prices())
+        prices = load_prices()
+        return jsonify(prices)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
@@ -51,39 +56,26 @@ def update_gift_price(gift_id, new_price):
     """Обновляет цену подарка"""
     try:
         prices = load_prices()
-        for gift_key, gift_data in prices['gifts'].items():
-            if gift_data['id'] == gift_id:
-                gift_data['price'] = new_price
+        for gift_type, gift in prices['gifts'].items():
+            if str(gift['id']) == str(gift_id):
+                gift['price'] = float(new_price)
                 save_prices(prices)
                 return True
         return False
     except Exception as e:
-        print(f"Ошибка при обновлении цены подарка: {e}")
-        return False
+        raise Exception(f"Ошибка при обновлении цены подарка: {str(e)}")
 
-def update_premium_price(package_id, new_price):
+def update_premium_price(package_index, new_price):
     """Обновляет цену премиум пакета"""
     try:
         prices = load_prices()
-        for package in prices['premium']['packages']:
-            if package['id'] == package_id:
-                package['price'] = new_price
-                save_prices(prices)
-                return True
+        if 0 <= package_index < len(prices['premium']['packages']):
+            prices['premium']['packages'][package_index]['price'] = float(new_price)
+            save_prices(prices)
+            return True
         return False
     except Exception as e:
-        print(f"Ошибка при обновлении цены премиум пакета: {e}")
-        return False
-
-def get_usd_rate():
-    """Получает актуальный курс USD/RUB с ЦБ РФ"""
-    try:
-        response = requests.get('https://www.cbr-xml-daily.ru/daily_json.js')
-        if response.ok:
-            data = response.json()
-            return data['Valute']['USD']['Value']
-    except:
-        return 90.0  # Фиксированный курс если API недоступен
+        raise Exception(f"Ошибка при обновлении цены премиум пакета: {str(e)}")
 
 bot = telebot.TeleBot(os.getenv('BOT_TOKEN'))
 
@@ -169,19 +161,21 @@ def show_gifts_menu(message):
 
 def show_premium_menu(message):
     prices = load_prices()
-    packages = prices['premium']['packages']
+    premium_packages = prices['premium']['packages']
     
     markup = telebot.types.InlineKeyboardMarkup(row_width=2)
-    for pkg in packages:
-        button_text = f"{pkg['name']} - {pkg['price']}₽"
-        callback_data = f"edit_premium_{pkg['id']}"
+    for i, pkg in enumerate(premium_packages):
+        duration = pkg['duration']
+        price = pkg['price']
+        button_text = f"🌟 {duration} дней - {price} ₽"
+        callback_data = f"edit_premium_{i}"
         markup.add(telebot.types.InlineKeyboardButton(text=button_text, callback_data=callback_data))
     
     # Добавляем кнопку возврата
     markup.add(telebot.types.InlineKeyboardButton("🔙 Назад", callback_data="back_to_admin"))
     
     bot.edit_message_text(
-        "Выберите пакет Premium для изменения цены:",
+        "Выберите премиум пакет для изменения цены:",
         message.chat.id,
         message.message_id,
         reply_markup=markup
@@ -237,13 +231,13 @@ def handle_edit_selection(call):
                 bot.register_next_step_handler(call.message, process_new_gift_price, gift_id=gift_id)
         
         elif item_type == 'premium':
-            package_id = int(item_id)
-            package = next((pkg for pkg in prices['premium']['packages'] if pkg['id'] == package_id), None)
-            if package:
-                msg = f"Текущая цена пакета '{package['name']}': {package['price']}₽\n\n"
-                msg += "Отправьте новую цену в рублях."
-                bot.send_message(call.message.chat.id, msg)
-                bot.register_next_step_handler(call.message, process_new_premium_price, package_id=package_id)
+            package_index = int(item_id)
+            package = prices['premium']['packages'][package_index]
+            duration = package['duration']
+            msg = f"Текущая цена пакета '{package['name']}': {package['price']}₽\n\n"
+            msg += "Отправьте новую цену в рублях."
+            bot.send_message(call.message.chat.id, msg)
+            bot.register_next_step_handler(call.message, process_new_premium_price, package_index=package_index)
         
         bot.answer_callback_query(call.id)
     
@@ -279,6 +273,7 @@ def process_new_price(message, stars):
         bot.reply_to(message, f"❌ Произошла ошибка: {str(e)}")
 
 def process_new_gift_price(message, gift_id):
+    """Обрабатывает новую цену подарка"""
     if message.from_user.id != int(os.getenv('ADMIN_ID')):
         bot.reply_to(message, "Извините, у вас нет доступа к этому боту.")
         return
@@ -288,23 +283,31 @@ def process_new_gift_price(message, gift_id):
         if new_price <= 0:
             raise ValueError("Цена должна быть положительным числом")
         
-        # Обновляем цену
+        # Обновляем цену подарка
         if update_gift_price(gift_id, new_price):
             prices = load_prices()
-            gift = next((data for _, data in prices['gifts'].items() if data['id'] == gift_id), None)
-            response = f"✅ Цена подарка '{gift['name']}' обновлена:\n"
+            gift_name = None
+            for gift in prices['gifts'].values():
+                if str(gift['id']) == str(gift_id):
+                    gift_name = gift['name']
+                    break
+            
+            response = f"✅ Цена подарка '{gift_name}' обновлена:\n"
             response += f"Новая цена: {new_price}₽"
         else:
             response = "❌ Подарок не найден"
         
         bot.reply_to(message, response)
-    
+        show_gifts_menu(message)
+        
     except ValueError:
-        bot.reply_to(message, "❌ Пожалуйста, введите корректную цену (число больше нуля)")
+        bot.reply_to(message, "❌ Пожалуйста, введите корректное число")
+        show_gifts_menu(message)
     except Exception as e:
         bot.reply_to(message, f"❌ Произошла ошибка: {str(e)}")
 
-def process_new_premium_price(message, package_id):
+def process_new_premium_price(message, package_index):
+    """Обрабатывает новую цену премиум пакета"""
     if message.from_user.id != int(os.getenv('ADMIN_ID')):
         bot.reply_to(message, "Извините, у вас нет доступа к этому боту.")
         return
@@ -314,26 +317,35 @@ def process_new_premium_price(message, package_id):
         if new_price <= 0:
             raise ValueError("Цена должна быть положительным числом")
         
-        # Обновляем цену
-        if update_premium_price(package_id, new_price):
+        # Обновляем цену премиум пакета
+        if update_premium_price(package_index, new_price):
             prices = load_prices()
-            package = next((pkg for pkg in prices['premium']['packages'] if pkg['id'] == package_id), None)
-            response = f"✅ Цена пакета '{package['name']}' обновлена:\n"
+            package = prices['premium']['packages'][package_index]
+            response = f"✅ Цена премиум пакета на {package['duration']} дней обновлена:\n"
             response += f"Новая цена: {new_price}₽"
         else:
             response = "❌ Пакет не найден"
         
         bot.reply_to(message, response)
-    
+        show_premium_menu(message)
+        
     except ValueError:
-        bot.reply_to(message, "❌ Пожалуйста, введите корректную цену (число больше нуля)")
+        bot.reply_to(message, "❌ Пожалуйста, введите корректное число")
+        show_premium_menu(message)
     except Exception as e:
         bot.reply_to(message, f"❌ Произошла ошибка: {str(e)}")
 
+def get_usd_rate():
+    """Получает актуальный курс USD/RUB с ЦБ РФ"""
+    try:
+        response = requests.get('https://www.cbr-xml-daily.ru/daily_json.js')
+        if response.ok:
+            data = response.json()
+            return data['Valute']['USD']['Value']
+    except:
+        return 90.0  # Фиксированный курс если API недоступен
+
 if __name__ == '__main__':
-    # Загружаем переменные окружения
-    load_dotenv()
-    
     # Запускаем Flask сервер в отдельном потоке
     flask_thread = threading.Thread(target=app.run, kwargs={'host': '0.0.0.0', 'port': 5000})
     flask_thread.daemon = True

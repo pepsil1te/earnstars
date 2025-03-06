@@ -497,23 +497,17 @@ async function loadPrices() {
     try {
         console.log('Загрузка цен...');
         
-        // Загружаем цены с локального сервера
-        const response = await fetch('http://localhost:5000/prices');
-        
+        // Используем относительный путь вместо localhost
+        const response = await fetch('/prices');
         if (!response.ok) {
             throw new Error(`Ошибка загрузки: ${response.status}`);
         }
-        
         const prices = await response.json();
-        if (!prices || !prices.stars || !prices.stars.packages) {
-            throw new Error('Некорректный формат данных');
-        }
-        
         allPackages = prices.stars.packages;
         showAllPackages();
     } catch (error) {
         console.error('Ошибка при загрузке цен:', error);
-        showError('Не удалось загрузить цены. Проверьте подключение к серверу и обновите страницу.');
+        document.querySelector('.error-message').textContent = 'Не удалось загрузить цены. Пожалуйста, попробуйте позже.';
     }
 }
 

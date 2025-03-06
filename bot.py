@@ -140,46 +140,54 @@ def show_stars_menu(message):
     )
 
 def show_gifts_menu(message):
-    prices = load_prices()
-    gifts = prices['gifts']
-    
-    markup = telebot.types.InlineKeyboardMarkup(row_width=2)
-    for gift_key, gift_data in gifts.items():
-        button_text = f"{gift_data['name']} - {gift_data['price']}₽"
-        callback_data = f"edit_gift_{gift_data['id']}"
-        markup.add(telebot.types.InlineKeyboardButton(text=button_text, callback_data=callback_data))
-    
-    # Добавляем кнопку возврата
-    markup.add(telebot.types.InlineKeyboardButton("🔙 Назад", callback_data="back_to_admin"))
-    
-    bot.edit_message_text(
-        "Выберите подарок для изменения цены:",
-        message.chat.id,
-        message.message_id,
-        reply_markup=markup
-    )
+    try:
+        prices = load_prices()
+        gifts = prices['gifts']
+        
+        # Создаем клавиатуру с подарками
+        keyboard = telebot.types.InlineKeyboardMarkup()
+        for gift_type, gift in gifts.items():
+            button_text = f"{gift['name']} - {gift['price']} ₽"
+            callback_data = f"edit_gift_{gift['id']}"
+            keyboard.add(telebot.types.InlineKeyboardButton(text=button_text, callback_data=callback_data))
+        
+        # Добавляем кнопку "Назад"
+        keyboard.add(telebot.types.InlineKeyboardButton(text="⬅️ Назад", callback_data="back_to_admin"))
+        
+        # Отправляем новое сообщение вместо редактирования
+        bot.send_message(
+            chat_id=message.chat.id,
+            text="Выберите подарок для редактирования цены:",
+            reply_markup=keyboard
+        )
+    except Exception as e:
+        bot.reply_to(message, f"❌ Произошла ошибка: {str(e)}")
 
 def show_premium_menu(message):
-    prices = load_prices()
-    premium_packages = prices['premium']['packages']
-    
-    markup = telebot.types.InlineKeyboardMarkup(row_width=2)
-    for i, pkg in enumerate(premium_packages):
-        duration = pkg['duration']
-        price = pkg['price']
-        button_text = f"🌟 {duration} дней - {price} ₽"
-        callback_data = f"edit_premium_{i}"
-        markup.add(telebot.types.InlineKeyboardButton(text=button_text, callback_data=callback_data))
-    
-    # Добавляем кнопку возврата
-    markup.add(telebot.types.InlineKeyboardButton("🔙 Назад", callback_data="back_to_admin"))
-    
-    bot.edit_message_text(
-        "Выберите премиум пакет для изменения цены:",
-        message.chat.id,
-        message.message_id,
-        reply_markup=markup
-    )
+    try:
+        prices = load_prices()
+        premium_packages = prices['premium']['packages']
+        
+        # Создаем клавиатуру с пакетами премиум
+        keyboard = telebot.types.InlineKeyboardMarkup()
+        for i, pkg in enumerate(premium_packages):
+            duration = pkg['duration']
+            price = pkg['price']
+            button_text = f"🌟 {duration} дней - {price} ₽"
+            callback_data = f"edit_premium_{i}"  # Используем индекс вместо id
+            keyboard.add(telebot.types.InlineKeyboardButton(text=button_text, callback_data=callback_data))
+        
+        # Добавляем кнопку "Назад"
+        keyboard.add(telebot.types.InlineKeyboardButton(text="⬅️ Назад", callback_data="back_to_admin"))
+        
+        # Отправляем новое сообщение вместо редактирования
+        bot.send_message(
+            chat_id=message.chat.id,
+            text="Выберите премиум пакет для редактирования цены:",
+            reply_markup=keyboard
+        )
+    except Exception as e:
+        bot.reply_to(message, f"❌ Произошла ошибка: {str(e)}")
 
 @bot.callback_query_handler(func=lambda call: call.data == "back_to_admin")
 def back_to_admin_menu(call):
@@ -298,6 +306,7 @@ def process_new_gift_price(message, gift_id):
             response = "❌ Подарок не найден"
         
         bot.reply_to(message, response)
+        # Показываем обновленное меню подарков
         show_gifts_menu(message)
         
     except ValueError:
@@ -327,6 +336,7 @@ def process_new_premium_price(message, package_index):
             response = "❌ Пакет не найден"
         
         bot.reply_to(message, response)
+        # Показываем обновленное меню премиум пакетов
         show_premium_menu(message)
         
     except ValueError:

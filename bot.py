@@ -22,6 +22,14 @@ CORS(app, resources={
     }
 })
 
+# Настройка CORS для доступа с мобильных устройств
+@app.after_request
+def after_request(response):
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
+    response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
+    return response
+
 # Путь к файлу с ценами
 PRICES_FILE = os.path.join(os.path.dirname(__file__), 'config', 'prices.json')
 
@@ -34,17 +42,10 @@ def load_prices():
         return json.load(f)
 
 def save_prices(prices):
-    """Сохраняет цены в JSON файл и создает копию в корневой директории"""
+    """Сохраняет цены в JSON файл"""
     try:
-        # Сохраняем в config/prices.json
         with open(PRICES_FILE, 'w', encoding='utf-8') as f:
             json.dump(prices, f, indent=4, ensure_ascii=False)
-            
-        # Создаем копию в корневой директории для GitHub Pages
-        root_prices_file = os.path.join(os.path.dirname(__file__), 'prices.json')
-        with open(root_prices_file, 'w', encoding='utf-8') as f:
-            json.dump(prices, f, indent=4, ensure_ascii=False)
-            
         return True
     except Exception as e:
         print(f"Ошибка при сохранении цен: {e}")
@@ -444,15 +445,11 @@ def set_server_url(message):
         bot.reply_to(message, f"Произошла ошибка: {str(e)}")
 
 if __name__ == '__main__':
-    # Запускаем Flask сервер в отдельном потоке на всех интерфейсах
-    flask_thread = threading.Thread(target=app.run, kwargs={'host': '0.0.0.0', 'port': 5000})
-    flask_thread.daemon = True
-    flask_thread.start()
+    # Запускаем Flask сервер в отдельном потоке
+    from threading import Thread
+    server = Thread(target=lambda: app.run(host='0.0.0.0', port=5000))
+    server.daemon = True
+    server.start()
     
     # Запускаем бота
-    while True:
-        try:
-            bot.polling(none_stop=True)
-        except Exception as e:
-            print(f"Ошибка в работе бота: {e}")
-            time.sleep(5)
+    bot.polling(none_stop=True)

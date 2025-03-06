@@ -42,8 +42,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     loadPrices();
-    // Обновляем цены каждые 30 секунд
-    setInterval(loadPrices, 30000);
 });
 
 // Инициализация анимаций
@@ -504,7 +502,7 @@ async function loadPrices() {
         console.log('Загрузка цен...');
         
         // Загружаем цены, используя базовый URL
-        const response = await fetch(`${BASE_URL}/config/prices.json`);
+        const response = await fetch('http://localhost:5000/prices');
         
         if (!response.ok) {
             throw new Error(`Ошибка загрузки: ${response.status}`);
@@ -734,8 +732,4 @@ function updatePremiumPrices() {
 }
 
 // Инициализация при загрузке страницы
-document.addEventListener('DOMContentLoaded', () => {
-    loadPrices();
-    // Обновляем цены каждые 30 секунд
-    setInterval(loadPrices, 30000);
-});
+document.addEventListener('DOMContentLoaded', loadPrices);

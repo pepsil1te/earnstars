@@ -34,9 +34,21 @@ def load_prices():
         return json.load(f)
 
 def save_prices(prices):
-    """Сохраняет цены в JSON файл"""
-    with open(PRICES_FILE, 'w', encoding='utf-8') as f:
-        json.dump(prices, f, indent=4, ensure_ascii=False)
+    """Сохраняет цены в JSON файл и создает копию в корневой директории"""
+    try:
+        # Сохраняем в config/prices.json
+        with open(PRICES_FILE, 'w', encoding='utf-8') as f:
+            json.dump(prices, f, indent=4, ensure_ascii=False)
+            
+        # Создаем копию в корневой директории для GitHub Pages
+        root_prices_file = os.path.join(os.path.dirname(__file__), 'prices.json')
+        with open(root_prices_file, 'w', encoding='utf-8') as f:
+            json.dump(prices, f, indent=4, ensure_ascii=False)
+            
+        return True
+    except Exception as e:
+        print(f"Ошибка при сохранении цен: {e}")
+        return False
 
 def load_server_config():
     try:

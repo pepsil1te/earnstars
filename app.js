@@ -494,16 +494,17 @@ async function verifyPrice() {
     }
 }
 
-// Определяем URL сервера для разных устройств
-const SERVER_URL = window.location.hostname === 'pepsil1te.github.io'
-    ? 'http://192.168.0.102:5000'  // Замените на IP вашего компьютера
-    : 'http://localhost:5000';
+// Определяем базовый URL в зависимости от окружения
+const BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? ''  // Для локальной разработки используем относительные пути
+    : 'https://pepsil1te.github.io/earnstars';  // Для GitHub Pages используем полный путь
 
 async function loadPrices() {
     try {
         console.log('Загрузка цен...');
         
-        const response = await fetch(`${SERVER_URL}/prices`);
+        // Загружаем цены, используя базовый URL
+        const response = await fetch(`${BASE_URL}/config/prices.json`);
         
         if (!response.ok) {
             throw new Error(`Ошибка загрузки: ${response.status}`);
@@ -731,3 +732,10 @@ function updatePremiumPrices() {
         }
     });
 }
+
+// Инициализация при загрузке страницы
+document.addEventListener('DOMContentLoaded', () => {
+    loadPrices();
+    // Обновляем цены каждые 30 секунд
+    setInterval(loadPrices, 30000);
+});

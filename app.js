@@ -146,7 +146,8 @@ function buyStars() {
     packagesExpanded = false;
     const packagesContainer = document.querySelector('.packages');
     if (packagesContainer) {
-        const packagesHtml = allPackages.slice(0, 3).map(pkg => `
+        // Показываем первые 6 пакетов по умолчанию
+        const packagesHtml = allPackages.slice(0, 6).map(pkg => `
             <div class="package" onclick="selectPackage(${pkg.stars})">
                 <div class="package-stars">
                     <img src="svg/star.svg" alt="star" class="star-icon">
@@ -212,6 +213,20 @@ function showAllPackages() {
     if (!packagesContainer || !allPackages || !button) return;
     
     if (packagesExpanded) {
+        // Показываем первые 6 пакетов
+        const packagesHtml = allPackages.slice(0, 6).map(pkg => `
+            <div class="package" onclick="selectPackage(${pkg.stars})">
+                <div class="package-stars">
+                    <img src="svg/star.svg" alt="star" class="star-icon">
+                    <span>${pkg.stars.toLocaleString()} звёзд</span>
+                </div>
+                <div class="package-price">${pkg.price} ₽ <span class="usd">~${pkg.usd} $</span></div>
+            </div>
+        `).join('');
+        
+        packagesContainer.innerHTML = packagesHtml;
+        button.textContent = currentLanguage === 'ru' ? 'Показать все пакеты' : 'Show all packages';
+    } else {
         // Показываем все пакеты
         const packagesHtml = allPackages.map(pkg => `
             <div class="package" onclick="selectPackage(${pkg.stars})">
@@ -225,21 +240,8 @@ function showAllPackages() {
         
         packagesContainer.innerHTML = packagesHtml;
         button.textContent = currentLanguage === 'ru' ? 'Скрыть пакеты' : 'Hide packages';
-    } else {
-        // Показываем только первые 3 пакета
-        const packagesHtml = allPackages.slice(0, 3).map(pkg => `
-            <div class="package" onclick="selectPackage(${pkg.stars})">
-                <div class="package-stars">
-                    <img src="svg/star.svg" alt="star" class="star-icon">
-                    <span>${pkg.stars.toLocaleString()} звёзд</span>
-                </div>
-                <div class="package-price">${pkg.price} ₽ <span class="usd">~${pkg.usd} $</span></div>
-            </div>
-        `).join('');
-        
-        packagesContainer.innerHTML = packagesHtml;
-        button.textContent = currentLanguage === 'ru' ? 'Показать все пакеты' : 'Show all packages';
     }
+    packagesExpanded = !packagesExpanded;
 }
 
 function togglePackages() {

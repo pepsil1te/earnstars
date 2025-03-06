@@ -12,284 +12,330 @@ import requests
 app = Flask(__name__)
 CORS(app)
 
-# Настройка SQLite
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///prices.db'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-db = SQLAlchemy(app)
+# Путь к файлу с ценами
+PRICES_FILE = os.path.join(os.path.dirname(__file__), 'config', 'prices.json')
 
-# Модель для хранения цен
-class StarPackage(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    stars = db.Column(db.Integer, nullable=False)
-    price = db.Column(db.Float, nullable=False)
-    usd = db.Column(db.Float, nullable=False)
+def load_prices():
+    """Загружает цены из JSON файла"""
+    with open(PRICES_FILE, 'r', encoding='utf-8') as f:
+        return json.load(f)
 
-class Gift(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100), nullable=False)
-    price = db.Column(db.Float, nullable=False)
-
-class PremiumPackage(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100), nullable=False)
-    price = db.Column(db.Float, nullable=False)
-
-# Создаем таблицы
-with app.app_context():
-    db.create_all()
-    # Добавляем начальные данные, если база пустая
-    if not StarPackage.query.first():
-        initial_packages = [
-            {'stars': 50, 'price': 50, 'usd': 0.56},
-            {'stars': 75, 'price': 75, 'usd': 0.83},
-            {'stars': 100, 'price': 100, 'usd': 1.11},
-            {'stars': 150, 'price': 150, 'usd': 1.67},
-            {'stars': 200, 'price': 200, 'usd': 2.22},
-            {'stars': 300, 'price': 300, 'usd': 3.33},
-            {'stars': 400, 'price': 400, 'usd': 4.44},
-            {'stars': 500, 'price': 500, 'usd': 5.56}
-        ]
-        for pkg in initial_packages:
-            db.session.add(StarPackage(**pkg))
-        
-        initial_gifts = [
-            {'name': 'Подарок 1', 'price': 100},
-            {'name': 'Подарок 2', 'price': 200},
-            {'name': 'Подарок 3', 'price': 300},
-        ]
-        for gift in initial_gifts:
-            db.session.add(Gift(**gift))
-        
-        initial_premium_packages = [
-            {'name': 'Премиум 1', 'price': 500},
-            {'name': 'Премиум 2', 'price': 1000},
-            {'name': 'Премиум 3', 'price': 1500},
-        ]
-        for pkg in initial_premium_packages:
-            db.session.add(PremiumPackage(**pkg))
-        
-        db.session.commit()
+def save_prices(prices):
+    """Сохраняет цены в JSON файл"""
+    with open(PRICES_FILE, 'w', encoding='utf-8') as f:
+        json.dump(prices, f, indent=4, ensure_ascii=False)
 
 @app.route('/prices', methods=['GET'])
 def get_prices():
     try:
-        packages = StarPackage.query.all()
-        gifts = Gift.query.all()
-        premium_packages = PremiumPackage.query.all()
-        prices_data = {
-            'stars': {
-                'packages': [
-                    {'stars': pkg.stars, 'price': pkg.price, 'usd': pkg.usd}
-                    for pkg in packages
-                ]
-            },
-            'gifts': {
-                gift.name: gift.price
-                for gift in gifts
-            },
-            'premium': {
-                'packages': [
-                    {'name': pkg.name, 'price': pkg.price}
-                    for pkg in premium_packages
-                ]
-            }
-        }
-        return jsonify(prices_data)
+        return jsonify(load_prices())
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
 def update_package_price(stars, new_price, new_usd):
-    with app.app_context():
-        package = StarPackage.query.filter_by(stars=stars).first()
-        if package:
-            package.price = new_price
-            package.usd = new_usd
-            db.session.commit()
-            return True
+    """Обновляет цену пакета звезд"""
+    try:
+        prices = load_prices()
+        for package in prices['stars']['packages']:
+            if package['stars'] == stars:
+                package['price'] = new_price
+                package['usd'] = new_usd
+                save_prices(prices)
+                return True
+        return False
+    except Exception as e:
+        print(f"Ошибка при обновлении цены пакета: {e}")
         return False
 
-def update_gift_price(gift_name, new_price):
-    with app.app_context():
-        gift = Gift.query.filter_by(name=gift_name).first()
-        if gift:
-            gift.price = new_price
-            db.session.commit()
-            return True
+def update_gift_price(gift_id, new_price):
+    """Обновляет цену подарка"""
+    try:
+        prices = load_prices()
+        for gift_key, gift_data in prices['gifts'].items():
+            if gift_data['id'] == gift_id:
+                gift_data['price'] = new_price
+                save_prices(prices)
+                return True
+        return False
+    except Exception as e:
+        print(f"Ошибка при обновлении цены подарка: {e}")
         return False
 
-def update_premium_price(package_name, new_price):
-    with app.app_context():
-        package = PremiumPackage.query.filter_by(name=package_name).first()
-        if package:
-            package.price = new_price
-            db.session.commit()
-            return True
+def update_premium_price(package_id, new_price):
+    """Обновляет цену премиум пакета"""
+    try:
+        prices = load_prices()
+        for package in prices['premium']['packages']:
+            if package['id'] == package_id:
+                package['price'] = new_price
+                save_prices(prices)
+                return True
+        return False
+    except Exception as e:
+        print(f"Ошибка при обновлении цены премиум пакета: {e}")
         return False
 
-def run_flask():
-    app.run(host='0.0.0.0', port=5000)
+def get_usd_rate():
+    """Получает актуальный курс USD/RUB с ЦБ РФ"""
+    try:
+        response = requests.get('https://www.cbr-xml-daily.ru/daily_json.js')
+        if response.ok:
+            data = response.json()
+            return data['Valute']['USD']['Value']
+    except:
+        return 90.0  # Фиксированный курс если API недоступен
 
-# Загружаем переменные окружения
-load_dotenv()
-BOT_TOKEN = os.getenv('BOT_TOKEN')
-ADMIN_ID = int(os.getenv('ADMIN_ID'))
-GITHUB_TOKEN = os.getenv('GITHUB_TOKEN')  # Добавьте этот токен в .env файл
-GITHUB_REPO = "pepsil1te/earnstars"
-GITHUB_BRANCH = "main"
-
-bot = telebot.TeleBot(BOT_TOKEN)
+bot = telebot.TeleBot(os.getenv('BOT_TOKEN'))
 
 @bot.message_handler(commands=['start'])
 def start(message):
-    if message.from_user.id != ADMIN_ID:
+    if message.from_user.id != int(os.getenv('ADMIN_ID')):
         bot.reply_to(message, "Извините, у вас нет доступа к этому боту.")
         return
     
-    bot.reply_to(message, "Привет! Используйте команду /звезды для управления ценами на звезды.")
+    bot.reply_to(message, "Привет! Используйте команду /admin для управления ценами.")
 
 @bot.message_handler(commands=['admin'])
 def admin_panel(message):
-    if message.from_user.id != ADMIN_ID:
+    if message.from_user.id != int(os.getenv('ADMIN_ID')):
         bot.reply_to(message, "❌ У вас нет доступа к админ-панели")
         return
     
-    markup = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True)
+    markup = telebot.types.InlineKeyboardMarkup(row_width=1)
     markup.add(
-        telebot.types.KeyboardButton('💫 Цены на звезды'),
-        telebot.types.KeyboardButton('🎁 Цены на подарки')
+        telebot.types.InlineKeyboardButton("💫 Цены на звезды", callback_data="menu_stars"),
+        telebot.types.InlineKeyboardButton("🎁 Цены на подарки", callback_data="menu_gifts"),
+        telebot.types.InlineKeyboardButton("👑 Цены на Premium", callback_data="menu_premium")
     )
-    markup.add(
-        telebot.types.KeyboardButton('👑 Цены на Premium'),
-        telebot.types.KeyboardButton('🔙 Назад')
-    )
-    bot.send_message(
+    
+    bot.send_message(message.chat.id, "Выберите раздел для редактирования цен:", reply_markup=markup)
+
+@bot.callback_query_handler(func=lambda call: call.data.startswith('menu_'))
+def handle_menu_selection(call):
+    if call.from_user.id != int(os.getenv('ADMIN_ID')):
+        bot.answer_callback_query(call.id, "У вас нет доступа к этой функции")
+        return
+    
+    menu_type = call.data.split('_')[1]
+    
+    if menu_type == 'stars':
+        show_stars_menu(call.message)
+    elif menu_type == 'gifts':
+        show_gifts_menu(call.message)
+    elif menu_type == 'premium':
+        show_premium_menu(call.message)
+    
+    bot.answer_callback_query(call.id)
+
+def show_stars_menu(message):
+    prices = load_prices()
+    packages = prices['stars']['packages']
+    
+    markup = telebot.types.InlineKeyboardMarkup(row_width=2)
+    for pkg in packages:
+        button_text = f"{pkg['stars']} звезд - {pkg['price']}₽"
+        callback_data = f"edit_stars_{pkg['stars']}"
+        markup.add(telebot.types.InlineKeyboardButton(text=button_text, callback_data=callback_data))
+    
+    # Добавляем кнопку возврата
+    markup.add(telebot.types.InlineKeyboardButton("🔙 Назад", callback_data="back_to_admin"))
+    
+    bot.edit_message_text(
+        "Выберите пакет звезд для изменения цены:",
         message.chat.id,
-        "Выберите раздел для редактирования цен:",
+        message.message_id,
         reply_markup=markup
     )
 
-@bot.message_handler(func=lambda message: message.text == '💫 Цены на звезды' and message.from_user.id == ADMIN_ID)
-def edit_star_prices(message):
-    with app.app_context():
-        packages = StarPackage.query.all()
-        response = "Текущие цены на звезды:\n\n"
-        for pkg in packages:
-            response += f"{pkg.stars} звезд - {pkg.price} руб. (${pkg.usd})\n"
-        
-        response += "\nДля изменения цены отправьте сообщение в формате:\n"
-        response += "звезды [количество] [новая цена] [цена в USD]\n"
-        response += "Например: звезды 50 60 0.67"
+def show_gifts_menu(message):
+    prices = load_prices()
+    gifts = prices['gifts']
     
-    bot.reply_to(message, response)
-
-@bot.message_handler(func=lambda message: message.text == '🎁 Цены на подарки' and message.from_user.id == ADMIN_ID)
-def edit_gift_prices(message):
-    with app.app_context():
-        gifts = Gift.query.all()
-        response = "Текущие цены на подарки:\n\n"
-        for gift in gifts:
-            response += f"{gift.name} - {gift.price} руб.\n"
-        
-        response += "\nДля изменения цены отправьте сообщение в формате:\n"
-        response += "подарок [название] [новая цена]\n"
-        response += "Например: подарок Подарок 1 120"
+    markup = telebot.types.InlineKeyboardMarkup(row_width=2)
+    for gift_key, gift_data in gifts.items():
+        button_text = f"{gift_data['name']} - {gift_data['price']}₽"
+        callback_data = f"edit_gift_{gift_data['id']}"
+        markup.add(telebot.types.InlineKeyboardButton(text=button_text, callback_data=callback_data))
     
-    bot.reply_to(message, response)
-
-@bot.message_handler(func=lambda message: message.text == '👑 Цены на Premium' and message.from_user.id == ADMIN_ID)
-def edit_premium_prices(message):
-    with app.app_context():
-        packages = PremiumPackage.query.all()
-        response = "Текущие пакеты Premium:\n\n"
-        for pkg in packages:
-            response += f"{pkg.name} - {pkg.price} руб.\n"
-        
-        response += "\nДля изменения цены отправьте сообщение в формате:\n"
-        response += "премиум [название] [новая цена]\n"
-        response += "Например: премиум Премиум 1 600"
+    # Добавляем кнопку возврата
+    markup.add(telebot.types.InlineKeyboardButton("🔙 Назад", callback_data="back_to_admin"))
     
-    bot.reply_to(message, response)
+    bot.edit_message_text(
+        "Выберите подарок для изменения цены:",
+        message.chat.id,
+        message.message_id,
+        reply_markup=markup
+    )
 
-@bot.message_handler(func=lambda message: message.text == '🔙 Назад' and message.from_user.id == ADMIN_ID)
-def back_to_start(message):
-    start(message)
+def show_premium_menu(message):
+    prices = load_prices()
+    packages = prices['premium']['packages']
+    
+    markup = telebot.types.InlineKeyboardMarkup(row_width=2)
+    for pkg in packages:
+        button_text = f"{pkg['name']} - {pkg['price']}₽"
+        callback_data = f"edit_premium_{pkg['id']}"
+        markup.add(telebot.types.InlineKeyboardButton(text=button_text, callback_data=callback_data))
+    
+    # Добавляем кнопку возврата
+    markup.add(telebot.types.InlineKeyboardButton("🔙 Назад", callback_data="back_to_admin"))
+    
+    bot.edit_message_text(
+        "Выберите пакет Premium для изменения цены:",
+        message.chat.id,
+        message.message_id,
+        reply_markup=markup
+    )
 
-@bot.message_handler(func=lambda message: message.text.lower().startswith('звезды '))
-def update_stars_price(message):
-    if message.from_user.id != ADMIN_ID:
+@bot.callback_query_handler(func=lambda call: call.data == "back_to_admin")
+def back_to_admin_menu(call):
+    if call.from_user.id != int(os.getenv('ADMIN_ID')):
+        bot.answer_callback_query(call.id, "У вас нет доступа к этой функции")
+        return
+    
+    markup = telebot.types.InlineKeyboardMarkup(row_width=1)
+    markup.add(
+        telebot.types.InlineKeyboardButton("💫 Цены на звезды", callback_data="menu_stars"),
+        telebot.types.InlineKeyboardButton("🎁 Цены на подарки", callback_data="menu_gifts"),
+        telebot.types.InlineKeyboardButton("👑 Цены на Premium", callback_data="menu_premium")
+    )
+    
+    bot.edit_message_text(
+        "Выберите раздел для редактирования цен:",
+        call.message.chat.id,
+        call.message.message_id,
+        reply_markup=markup
+    )
+    bot.answer_callback_query(call.id)
+
+@bot.callback_query_handler(func=lambda call: call.data.startswith(('edit_stars_', 'edit_gift_', 'edit_premium_')))
+def handle_edit_selection(call):
+    if call.from_user.id != int(os.getenv('ADMIN_ID')):
+        bot.answer_callback_query(call.id, "У вас нет доступа к этой функции")
+        return
+    
+    try:
+        action, item_type, item_id = call.data.split('_')
+        prices = load_prices()
+        
+        if item_type == 'stars':
+            stars = int(item_id)
+            package = next((pkg for pkg in prices['stars']['packages'] if pkg['stars'] == stars), None)
+            if package:
+                msg = f"Текущая цена пакета {stars} звезд: {package['price']}₽ (${package['usd']})\n\n"
+                msg += "Отправьте новую цену в рублях."
+                bot.send_message(call.message.chat.id, msg)
+                bot.register_next_step_handler(call.message, process_new_price, stars=stars)
+        
+        elif item_type == 'gift':
+            gift_id = int(item_id)
+            gift = next((data for _, data in prices['gifts'].items() if data['id'] == gift_id), None)
+            if gift:
+                msg = f"Текущая цена подарка '{gift['name']}': {gift['price']}₽\n\n"
+                msg += "Отправьте новую цену в рублях."
+                bot.send_message(call.message.chat.id, msg)
+                bot.register_next_step_handler(call.message, process_new_gift_price, gift_id=gift_id)
+        
+        elif item_type == 'premium':
+            package_id = int(item_id)
+            package = next((pkg for pkg in prices['premium']['packages'] if pkg['id'] == package_id), None)
+            if package:
+                msg = f"Текущая цена пакета '{package['name']}': {package['price']}₽\n\n"
+                msg += "Отправьте новую цену в рублях."
+                bot.send_message(call.message.chat.id, msg)
+                bot.register_next_step_handler(call.message, process_new_premium_price, package_id=package_id)
+        
+        bot.answer_callback_query(call.id)
+    
+    except Exception as e:
+        bot.answer_callback_query(call.id, f"Произошла ошибка: {str(e)}")
+
+def process_new_price(message, stars):
+    if message.from_user.id != int(os.getenv('ADMIN_ID')):
         bot.reply_to(message, "Извините, у вас нет доступа к этому боту.")
         return
     
     try:
-        parts = message.text.split()
-        if len(parts) != 4:
-            raise ValueError("Неверный формат команды")
+        new_price = float(message.text)
+        if new_price <= 0:
+            raise ValueError("Цена должна быть положительным числом")
         
-        stars = int(parts[1])
-        price = float(parts[2])
-        usd = float(parts[3])
+        # Получаем курс USD
+        usd_rate = get_usd_rate()
+        new_usd = round(new_price / usd_rate, 2)
         
-        if update_package_price(stars, price, usd):
-            bot.reply_to(message, f"✅ Цена для пакета {stars} звезд обновлена:\n{price} руб. (${usd})")
+        # Обновляем цену
+        if update_package_price(stars, new_price, new_usd):
+            response = f"✅ Цена пакета {stars} звезд обновлена:\n"
+            response += f"Новая цена: {new_price}₽ (${new_usd})"
         else:
-            bot.reply_to(message, f"❌ Пакет {stars} звезд не найден")
+            response = "❌ Пакет не найден"
+        
+        bot.reply_to(message, response)
     
-    except ValueError as e:
-        bot.reply_to(message, f"❌ Ошибка: {str(e)}\nИспользуйте формат: звезды [количество] [новая цена] [цена в USD]")
+    except ValueError:
+        bot.reply_to(message, "❌ Пожалуйста, введите корректную цену (число больше нуля)")
     except Exception as e:
         bot.reply_to(message, f"❌ Произошла ошибка: {str(e)}")
 
-@bot.message_handler(func=lambda message: message.text.lower().startswith('подарок '))
-def update_gift_price(message):
-    if message.from_user.id != ADMIN_ID:
+def process_new_gift_price(message, gift_id):
+    if message.from_user.id != int(os.getenv('ADMIN_ID')):
         bot.reply_to(message, "Извините, у вас нет доступа к этому боту.")
         return
     
     try:
-        parts = message.text.split()
-        if len(parts) != 3:
-            raise ValueError("Неверный формат команды")
+        new_price = float(message.text)
+        if new_price <= 0:
+            raise ValueError("Цена должна быть положительным числом")
         
-        gift_name = ' '.join(parts[1:-1])
-        new_price = float(parts[-1])
-        
-        if update_gift_price(gift_name, new_price):
-            bot.reply_to(message, f"✅ Цена подарка '{gift_name}' обновлена:\n{new_price} руб.")
+        # Обновляем цену
+        if update_gift_price(gift_id, new_price):
+            prices = load_prices()
+            gift = next((data for _, data in prices['gifts'].items() if data['id'] == gift_id), None)
+            response = f"✅ Цена подарка '{gift['name']}' обновлена:\n"
+            response += f"Новая цена: {new_price}₽"
         else:
-            bot.reply_to(message, f"❌ Подарок '{gift_name}' не найден")
+            response = "❌ Подарок не найден"
+        
+        bot.reply_to(message, response)
     
-    except ValueError as e:
-        bot.reply_to(message, f"❌ Ошибка: {str(e)}\nИспользуйте формат: подарок [название] [новая цена]")
+    except ValueError:
+        bot.reply_to(message, "❌ Пожалуйста, введите корректную цену (число больше нуля)")
     except Exception as e:
         bot.reply_to(message, f"❌ Произошла ошибка: {str(e)}")
 
-@bot.message_handler(func=lambda message: message.text.lower().startswith('премиум '))
-def update_premium_price(message):
-    if message.from_user.id != ADMIN_ID:
+def process_new_premium_price(message, package_id):
+    if message.from_user.id != int(os.getenv('ADMIN_ID')):
         bot.reply_to(message, "Извините, у вас нет доступа к этому боту.")
         return
     
     try:
-        parts = message.text.split()
-        if len(parts) != 3:
-            raise ValueError("Неверный формат команды")
+        new_price = float(message.text)
+        if new_price <= 0:
+            raise ValueError("Цена должна быть положительным числом")
         
-        package_name = ' '.join(parts[1:-1])
-        new_price = float(parts[-1])
-        
-        if update_premium_price(package_name, new_price):
-            bot.reply_to(message, f"✅ Цена пакета '{package_name}' обновлена:\n{new_price} руб.")
+        # Обновляем цену
+        if update_premium_price(package_id, new_price):
+            prices = load_prices()
+            package = next((pkg for pkg in prices['premium']['packages'] if pkg['id'] == package_id), None)
+            response = f"✅ Цена пакета '{package['name']}' обновлена:\n"
+            response += f"Новая цена: {new_price}₽"
         else:
-            bot.reply_to(message, f"❌ Пакет '{package_name}' не найден")
+            response = "❌ Пакет не найден"
+        
+        bot.reply_to(message, response)
     
-    except ValueError as e:
-        bot.reply_to(message, f"❌ Ошибка: {str(e)}\nИспользуйте формат: премиум [название] [новая цена]")
+    except ValueError:
+        bot.reply_to(message, "❌ Пожалуйста, введите корректную цену (число больше нуля)")
     except Exception as e:
         bot.reply_to(message, f"❌ Произошла ошибка: {str(e)}")
 
 if __name__ == '__main__':
+    # Загружаем переменные окружения
+    load_dotenv()
+    
     # Запускаем Flask сервер в отдельном потоке
-    flask_thread = threading.Thread(target=run_flask)
+    flask_thread = threading.Thread(target=app.run, kwargs={'host': '0.0.0.0', 'port': 5000})
     flask_thread.daemon = True
     flask_thread.start()
     

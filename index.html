@@ -21,28 +21,46 @@
     </div>
 
     <div id="home-page" class="page active">
-        <div class="main-buttons">
-            <button class="button primary" onclick="buyStars()">
-                <img src="svg/star.svg" alt="star">
-                <span class="lang-text" data-ru="Купить звёзды" data-en="Buy Stars">Купить звёзды</span>
-            </button>
+        <div class="main-actions">
+            <div class="action-cards">
+                <div class="action-card" onclick="buyStars()">
+                    <div class="action-icon">
+                        <img src="svg/star.svg" alt="star" class="arrow-down">
+                    </div>
+                    <div class="action-text">Купить звёзды</div>
+                </div>
+            </div>
         </div>
 
-        <div class="secondary-buttons">
-            <button class="button secondary" onclick="buyGift()">
-                <span class="lang-text" data-ru="Купить подарок" data-en="Buy Gift">Купить подарок</span>
-            </button>
-            <button class="button secondary" onclick="buyPremium()">
-                <span class="lang-text" data-ru="Купить Telegram Premium" data-en="Buy Telegram Premium">Купить Telegram Premium</span>
-            </button>
-            <button class="button secondary" onclick="showTransactions()">
-                <span class="lang-text" data-ru="Список транзакций" data-en="Transaction History">Список транзакций</span>
-            </button>
-            <button class="button secondary" onclick="subscribeChannel()">
-                <span class="lang-text" data-ru="Подписаться на канал" data-en="Subscribe to Channel">Подписаться на канал</span>
-            </button>
-            <button class="button secondary" onclick="contactSupport()">
-                <span class="lang-text" data-ru="Написать в поддержку" data-en="Contact Support">Написать в поддержку</span>
+        <div class="premium-card" onclick="buyPremium()">
+            <div class="premium-info">
+                <div class="premium-title">Telegram Premium</div>
+                <div class="premium-subtitle">Для себя и друзей</div>
+            </div>
+            <div class="premium-icon">
+                <img src="svg/star.svg" alt="premium">
+            </div>
+        </div>
+
+        <div class="telegram-gifts">
+            <div class="gifts-title">Telegram-подарки</div>
+            <div class="gifts-grid">
+                <div class="gift-card" onclick="buyGift('bday')">
+                    <img src="svg/gift.svg" alt="gift">
+                    <div class="gift-price">300 ₽</div>
+                </div>
+                <div class="gift-card" onclick="buyGift('bow')">
+                    <img src="svg/gift.svg" alt="gift">
+                    <div class="gift-price">600 ₽</div>
+                </div>
+                <div class="gift-card" onclick="buyGift('cake')">
+                    <img src="svg/gift.svg" alt="gift">
+                    <div class="gift-price">700 ₽</div>
+                </div>
+            </div>
+            <button class="show-more-gifts" onclick="showAllGifts()">
+                Еще 12
+                <img src="svg/arrow-right.svg" alt="arrow">
             </button>
         </div>
     </div>

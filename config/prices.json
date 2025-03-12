@@ -93,18 +93,18 @@
     "premium": {
         "packages": [
             {
-                "duration": 1,
-                "price": 500.0,
-                "name": "1 месяц"
+                "duration": 3,
+                "price": 1340,
+                "name": "3 месяца"
             },
             {
                 "duration": 6,
-                "price": 2500,
+                "price": 1800,
                 "name": "6 месяцев"
             },
             {
                 "duration": 12,
-                "price": 4500,
+                "price": 3380,
                 "name": "12 месяцев"
             }
         ]

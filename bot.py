@@ -8,6 +8,7 @@ from flask_sqlalchemy import SQLAlchemy
 import threading
 import base64
 import requests
+from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo
 
 # Загружаем переменные окружения
 load_dotenv()
@@ -82,8 +83,14 @@ bot = telebot.TeleBot(os.getenv('BOT_TOKEN'))
 @bot.message_handler(commands=['start'])
 def start(message):
     keyboard = InlineKeyboardMarkup()
-    app_button = InlineKeyboardButton(text="Открыть приложение", web_app={"url": os.getenv('WEBAPP_URL')})
-    channel_button = InlineKeyboardButton(text="Подписаться на канал", url="https://t.me/ez_stars")
+    app_button = InlineKeyboardButton(
+        text="Открыть приложение", 
+        web_app=WebAppInfo(url=os.getenv('WEBAPP_URL'))
+    )
+    channel_button = InlineKeyboardButton(
+        text="Подписаться на канал", 
+        url="https://t.me/ez_stars"
+    )
     keyboard.add(app_button)
     keyboard.add(channel_button)
     

@@ -160,7 +160,7 @@ function buyForSelf() {
 
 function buyStars() {
     showPage('buy-page');
-    // Показываем первые 3 пакета по умолчанию
+        // Показываем первые 3 пакета по умолчанию
     const packagesContainer = document.querySelector('.packages');
     if (packagesContainer && allPackages.length > 0) {
         const packagesHtml = allPackages.slice(0, 3).map(pkg => `
@@ -632,15 +632,15 @@ function processPremiumPayment() {
     
     if (!recipient || !email) {
         tg.showAlert('Пожалуйста, заполните все поля');
-        return;
-    }
-    
+            return;
+        }
+        
     // Отправляем данные в телеграм
     tg.sendData(JSON.stringify({
         action: 'buy_premium',
         duration: selectedPremiumPackage.duration,
         price: selectedPremiumPackage.price,
-        recipient: recipient,
+            recipient: recipient,
         email: email
     }));
     
@@ -845,9 +845,9 @@ async function processStarsPayment() {
         
         if (!recipient) {
             showError('Укажите получателя');
-            return;
-        }
-        
+        return;
+    }
+
         if (!selectedPackage || !starsAmount) {
             showError('Выберите количество звезд');
             return;

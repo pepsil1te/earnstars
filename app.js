@@ -145,27 +145,18 @@ function buyForSelf() {
 }
 
 function buyStars() {
+    console.log('Переход на страницу покупки звезд');
     navigate('buy');
     packagesExpanded = false;
     
     // Принудительно загружаем актуальные цены
-    const timestamp = new Date().getTime();
-    fetch(`config/prices.json?_=${timestamp}`)
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(`Ошибка загрузки: ${response.status}`);
-            }
-            return response.json();
-        })
-        .then(prices => {
-            console.log('Цены успешно загружены при переходе на страницу покупки');
-            allPackages = prices.stars.packages;
-            showAllPackages();
-        })
-        .catch(error => {
-            console.error('Ошибка при загрузке цен:', error);
-            showError('Не удалось загрузить актуальные цены. Пожалуйста, обновите страницу.');
-        });
+    forceUpdatePrices().then(success => {
+        if (success) {
+            console.log('Цены успешно обновлены при переходе на страницу покупки');
+        } else {
+            console.error('Не удалось обновить цены при переходе на страницу покупки');
+        }
+    });
     
     const starsPayButton = document.getElementById('stars-pay-button');
     if (starsPayButton) {
@@ -213,12 +204,23 @@ function selectPackage(amount) {
 let packagesExpanded = false;
 
 function showAllPackages() {
+    console.log('Вызвана функция showAllPackages');
+    console.log('Текущие пакеты:', JSON.stringify(allPackages));
+    
     const packagesContainer = document.querySelector('.packages');
     const button = document.querySelector('.show-more');
-    if (!packagesContainer || !allPackages || !button) return;
+    if (!packagesContainer || !allPackages || !button) {
+        console.error('Не найдены необходимые элементы:', {
+            packagesContainer: !!packagesContainer,
+            allPackages: !!allPackages,
+            button: !!button
+        });
+        return;
+    }
     
     if (!packagesExpanded) {
         // Показываем все пакеты
+        console.log('Отображаем все пакеты');
         const packagesHtml = allPackages.map(pkg => `
             <div class="package" onclick="selectPackage(${pkg.stars})">
                 <div class="package-stars">
@@ -233,6 +235,7 @@ function showAllPackages() {
         button.textContent = currentLanguage === 'ru' ? 'Скрыть пакеты' : 'Hide packages';
     } else {
         // Показываем только первые 3 пакета
+        console.log('Отображаем первые 3 пакета');
         const packagesHtml = allPackages.slice(0, 3).map(pkg => `
             <div class="package" onclick="selectPackage(${pkg.stars})">
                 <div class="package-stars">
@@ -247,6 +250,7 @@ function showAllPackages() {
         button.textContent = currentLanguage === 'ru' ? 'Показать все пакеты' : 'Show all packages';
     }
     packagesExpanded = !packagesExpanded;
+    console.log('Пакеты обновлены, packagesExpanded =', packagesExpanded);
 }
 
 function togglePackages() {
@@ -440,12 +444,40 @@ async function loadPrices() {
         
         // Используем локальный файл вместо относительного пути
         const timestamp = new Date().getTime();
+        console.log(`Запрос к config/prices.json?_=${timestamp}`);
         const response = await fetch(`config/prices.json?_=${timestamp}`);
         if (!response.ok) {
             throw new Error(`Ошибка загрузки: ${response.status}`);
         }
         const prices = await response.json();
+        console.log('Получены данные о ценах:', JSON.stringify(prices));
+        
+        // Проверяем, есть ли изменения в ценах
+        if (allPackages && allPackages.length > 0) {
+            console.log('Сравниваем с текущими пакетами');
+            let hasChanges = false;
+            
+            // Проверяем пакет со звездами 50
+            const newPackage50 = prices.stars.packages.find(p => p.stars === 50);
+            const oldPackage50 = allPackages.find(p => p.stars === 50);
+            
+            if (newPackage50 && oldPackage50) {
+                console.log(`Пакет 50 звезд: старая цена = ${oldPackage50.price}, новая цена = ${newPackage50.price}`);
+                if (newPackage50.price !== oldPackage50.price) {
+                    hasChanges = true;
+                    console.log('Цена изменилась!');
+                }
+            }
+            
+            if (hasChanges) {
+                console.log('Обнаружены изменения в ценах, обновляем пакеты');
+            } else {
+                console.log('Изменений в ценах не обнаружено');
+            }
+        }
+        
         allPackages = prices.stars.packages;
+        console.log('Обновлены данные allPackages:', JSON.stringify(allPackages));
         showAllPackages();
     } catch (error) {
         console.error('Ошибка при загрузке цен:', error);
@@ -628,22 +660,39 @@ function processGiftPayment() {
 
 // Функция для периодической проверки обновления цен
 function startPriceUpdateChecker() {
-    // Проверяем цены каждые 10 секунд (уменьшил с 30 до 10 для более быстрого обновления)
+    console.log('Запущена функция периодической проверки цен');
+    // Проверяем цены каждые 5 секунд (уменьшил для более быстрого обновления)
     setInterval(async () => {
         try {
-            console.log('Проверка обновления цен...');
+            console.log('Периодическая проверка обновления цен...');
             const timestamp = new Date().getTime(); // Добавляем timestamp для предотвращения кеширования
-            const response = await fetch(`config/prices.json?_=${timestamp}`);
+            console.log(`Запрос к config/prices.json?_=${timestamp} из периодической проверки`);
+            const response = await fetch(`config/prices.json?_=${timestamp}`, {
+                cache: 'no-store' // Принудительно отключаем кеширование
+            });
             
             if (!response.ok) {
                 throw new Error(`Ошибка загрузки: ${response.status}`);
             }
             
             const prices = await response.json();
+            console.log('Получены данные о ценах из периодической проверки:', JSON.stringify(prices.stars.packages[0]));
             
             // Проверяем, изменились ли цены
             if (allPackages && allPackages.length > 0) {
                 let pricesChanged = false;
+                
+                // Проверяем пакет со звездами 50
+                const oldPackage50 = allPackages.find(p => p.stars === 50);
+                const newPackage50 = prices.stars.packages.find(p => p.stars === 50);
+                
+                if (oldPackage50 && newPackage50) {
+                    console.log(`Периодическая проверка - пакет 50 звезд: старая цена = ${oldPackage50.price}, новая цена = ${newPackage50.price}`);
+                    if (oldPackage50.price !== newPackage50.price) {
+                        pricesChanged = true;
+                        console.log('Цена пакета 50 звезд изменилась!');
+                    }
+                }
                 
                 // Проверяем, изменились ли цены пакетов
                 if (prices.stars.packages.length !== allPackages.length) {
@@ -666,10 +715,12 @@ function startPriceUpdateChecker() {
                 if (pricesChanged) {
                     console.log('Цены изменились, обновляем...');
                     allPackages = prices.stars.packages;
+                    console.log('Обновлены данные allPackages в периодической проверке:', JSON.stringify(allPackages[0]));
                     
                     // Если мы на странице покупки, обновляем отображение пакетов
                     const buyPage = document.getElementById('buy-page');
                     if (buyPage && buyPage.classList.contains('active')) {
+                        console.log('Мы на странице покупки, обновляем отображение пакетов');
                         showAllPackages();
                         
                         // Если выбран пакет, проверяем, не изменилась ли его цена
@@ -677,12 +728,14 @@ function startPriceUpdateChecker() {
                             const updatedPackage = allPackages.find(p => p.stars === selectedPackage.stars);
                             if (updatedPackage) {
                                 if (updatedPackage.price !== selectedPackage.price) {
+                                    console.log(`Цена выбранного пакета изменилась: ${selectedPackage.price} -> ${updatedPackage.price}`);
                                     selectedPackage = updatedPackage;
                                     updateSelectedPackageDisplay();
                                     showError('Цена пакета была обновлена. Пожалуйста, проверьте новую стоимость.');
                                 }
                             } else {
                                 // Если пакет больше не существует, сбрасываем выбор
+                                console.log('Выбранный пакет больше не существует');
                                 selectedPackage = null;
                                 const starsPayButton = document.getElementById('stars-pay-button');
                                 if (starsPayButton) {
@@ -691,16 +744,85 @@ function startPriceUpdateChecker() {
                                 showError('Выбранный пакет больше не доступен.');
                             }
                         }
+                    } else {
+                        console.log('Мы не на странице покупки, отображение пакетов не обновляется');
                     }
+                } else {
+                    console.log('Изменений в ценах не обнаружено');
                 }
             } else {
                 // Если пакеты еще не загружены, загружаем их
                 console.log('Пакеты еще не загружены, загружаем...');
                 allPackages = prices.stars.packages;
+                console.log('Инициализированы данные allPackages:', JSON.stringify(allPackages[0]));
                 showAllPackages();
             }
         } catch (error) {
             console.error('Ошибка при проверке обновления цен:', error);
         }
-    }, 10000); // Проверка каждые 10 секунд
+    }, 5000); // Проверка каждые 5 секунд
 }
+
+// Функция для принудительного обновления цен (можно вызвать из консоли)
+async function forceUpdatePrices() {
+    console.log('Принудительное обновление цен...');
+    try {
+        const timestamp = new Date().getTime();
+        console.log(`Запрос к config/prices.json?_=${timestamp} из forceUpdatePrices`);
+        const response = await fetch(`config/prices.json?_=${timestamp}`, {
+            cache: 'no-store',
+            headers: {
+                'Cache-Control': 'no-cache',
+                'Pragma': 'no-cache'
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error(`Ошибка загрузки: ${response.status}`);
+        }
+        
+        const prices = await response.json();
+        console.log('Получены данные о ценах из forceUpdatePrices:', JSON.stringify(prices.stars.packages[0]));
+        
+        // Сохраняем старые пакеты для сравнения
+        const oldPackages = allPackages ? [...allPackages] : [];
+        
+        // Обновляем пакеты
+        allPackages = prices.stars.packages;
+        console.log('Обновлены данные allPackages в forceUpdatePrices:', JSON.stringify(allPackages[0]));
+        
+        // Если мы на странице покупки, обновляем отображение пакетов
+        const buyPage = document.getElementById('buy-page');
+        if (buyPage && buyPage.classList.contains('active')) {
+            console.log('Мы на странице покупки, обновляем отображение пакетов');
+            showAllPackages();
+            
+            // Выводим сообщение об успешном обновлении
+            showError('Цены успешно обновлены');
+            
+            // Сравниваем цены
+            if (oldPackages.length > 0) {
+                const oldPackage50 = oldPackages.find(p => p.stars === 50);
+                const newPackage50 = allPackages.find(p => p.stars === 50);
+                
+                if (oldPackage50 && newPackage50) {
+                    console.log(`Сравнение цен пакета 50 звезд: старая = ${oldPackage50.price}, новая = ${newPackage50.price}`);
+                    if (oldPackage50.price !== newPackage50.price) {
+                        console.log('Цена пакета 50 звезд изменилась!');
+                    }
+                }
+            }
+        } else {
+            console.log('Мы не на странице покупки, отображение пакетов не обновляется');
+        }
+        
+        return true;
+    } catch (error) {
+        console.error('Ошибка при принудительном обновлении цен:', error);
+        showError('Не удалось обновить цены. Пожалуйста, попробуйте позже.');
+        return false;
+    }
+}
+
+// Делаем функцию доступной глобально
+window.forceUpdatePrices = forceUpdatePrices;

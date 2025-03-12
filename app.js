@@ -43,6 +43,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Загружаем цены при старте
     loadPrices();
+
+    // Добавляем вызов функции при загрузке страницы
+    loadGifts();
 });
 
 // Инициализация анимаций
@@ -862,4 +865,40 @@ function updateCharCounter(textarea) {
     if (counter) {
         counter.textContent = textarea.value.length;
     }
+}
+
+function loadGifts() {
+    const gifts = [
+        { id: 'bday', name: 'B-DAY', price: 300, image: 'svg/bday.svg' },
+        { id: 'bow', name: 'Бабочка', price: 600, image: 'svg/bow.svg' },
+        { id: 'cake', name: 'Торт', price: 700, image: 'svg/cake.svg' },
+        // Добавьте здесь остальные подарки
+    ];
+    
+    // Отображаем первые 3 подарка на главной
+    const giftsGrid = document.querySelector('.gifts-grid');
+    if (giftsGrid) {
+        const firstThreeGifts = gifts.slice(0, 3);
+        giftsGrid.innerHTML = firstThreeGifts.map(gift => `
+            <div class="gift-card" onclick="showGiftModal('${gift.id}', ${gift.price})">
+                <img src="${gift.image}" alt="${gift.name}">
+                <div class="gift-price">${gift.price} ₽</div>
+            </div>
+        `).join('');
+
+        // Обновляем кнопку "Еще"
+        const remainingCount = Math.max(0, gifts.length - 3);
+        const showMoreButton = document.querySelector('.show-more-gifts');
+        if (showMoreButton) {
+            showMoreButton.innerHTML = `
+                Еще ${remainingCount}
+                <img src="svg/arrow-right.svg" alt="arrow">
+            `;
+            showMoreButton.style.display = remainingCount > 0 ? 'flex' : 'none';
+        }
+    }
+}
+
+function showAllGifts() {
+    navigate('gifts');
 }

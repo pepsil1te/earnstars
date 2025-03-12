@@ -806,6 +806,9 @@ button {
     padding: 5px 10px;
     border-radius: 5px;
     transition: background-color 0.3s;
+    text-align: center;
+    width: 100%;
+    max-width: 200px;
 }
 
 .show-more:hover {

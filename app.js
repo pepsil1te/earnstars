@@ -148,8 +148,24 @@ function buyStars() {
     navigate('buy');
     packagesExpanded = false;
     
-    // Always reload prices to ensure we have the latest
-    loadPrices();
+    // Принудительно загружаем актуальные цены
+    const timestamp = new Date().getTime();
+    fetch(`config/prices.json?_=${timestamp}`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`Ошибка загрузки: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(prices => {
+            console.log('Цены успешно загружены при переходе на страницу покупки');
+            allPackages = prices.stars.packages;
+            showAllPackages();
+        })
+        .catch(error => {
+            console.error('Ошибка при загрузке цен:', error);
+            showError('Не удалось загрузить актуальные цены. Пожалуйста, обновите страницу.');
+        });
     
     const starsPayButton = document.getElementById('stars-pay-button');
     if (starsPayButton) {
@@ -612,11 +628,11 @@ function processGiftPayment() {
 
 // Функция для периодической проверки обновления цен
 function startPriceUpdateChecker() {
-    // Проверяем цены каждые 30 секунд
+    // Проверяем цены каждые 10 секунд (уменьшил с 30 до 10 для более быстрого обновления)
     setInterval(async () => {
         try {
             console.log('Проверка обновления цен...');
-            const timestamp = new Date().getTime();
+            const timestamp = new Date().getTime(); // Добавляем timestamp для предотвращения кеширования
             const response = await fetch(`config/prices.json?_=${timestamp}`);
             
             if (!response.ok) {
@@ -632,6 +648,7 @@ function startPriceUpdateChecker() {
                 // Проверяем, изменились ли цены пакетов
                 if (prices.stars.packages.length !== allPackages.length) {
                     pricesChanged = true;
+                    console.log('Изменилось количество пакетов');
                 } else {
                     for (let i = 0; i < prices.stars.packages.length; i++) {
                         const newPkg = prices.stars.packages[i];
@@ -639,6 +656,7 @@ function startPriceUpdateChecker() {
                         
                         if (!oldPkg || oldPkg.price !== newPkg.price) {
                             pricesChanged = true;
+                            console.log(`Изменилась цена пакета ${newPkg.stars} звезд: ${oldPkg ? oldPkg.price : 'новый'} -> ${newPkg.price}`);
                             break;
                         }
                     }
@@ -677,10 +695,12 @@ function startPriceUpdateChecker() {
                 }
             } else {
                 // Если пакеты еще не загружены, загружаем их
+                console.log('Пакеты еще не загружены, загружаем...');
                 allPackages = prices.stars.packages;
+                showAllPackages();
             }
         } catch (error) {
             console.error('Ошибка при проверке обновления цен:', error);
         }
-    }, 30000); // Проверка каждые 30 секунд
+    }, 10000); // Проверка каждые 10 секунд
 }

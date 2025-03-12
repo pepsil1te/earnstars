@@ -140,22 +140,22 @@
             <h1>Подарки</h1>
         </div>
         <div class="gift-grid">
-            <div class="gift-item" onclick="showGiftModal('heart')">
+            <div class="gift-item" onclick="showGiftModal('heart', 170)">
                 <div class="gift-container" id="heart-animation"></div>
                 <div class="gift-name">Сердце</div>
-                <div class="gift-price heart-price">100 ₽</div>
+                <div class="gift-price heart-price">170 ₽</div>
             </div>
-            <div class="gift-item" onclick="showGiftModal('bear')">
+            <div class="gift-item" onclick="showGiftModal('bear', 200)">
                 <div class="gift-container" id="bear-animation"></div>
                 <div class="gift-name">Мишка</div>
                 <div class="gift-price bear-price">200 ₽</div>
             </div>
-            <div class="gift-item" onclick="showGiftModal('present')">
+            <div class="gift-item" onclick="showGiftModal('present', 150)">
                 <div class="gift-container" id="present-animation"></div>
                 <div class="gift-name">Подарок</div>
                 <div class="gift-price present-price">150 ₽</div>
             </div>
-            <div class="gift-item" onclick="showGiftModal('ring')">
+            <div class="gift-item" onclick="showGiftModal('ring', 300)">
                 <div class="gift-container" id="ring-animation"></div>
                 <div class="gift-name">Кольцо</div>
                 <div class="gift-price ring-price">300 ₽</div>
@@ -216,15 +216,15 @@
                 <input type="email" id="premium-email" placeholder="email@example.com" required>
             </div>
             <div class="premium-packages">
-                <div class="premium-package" onclick="selectPremiumPackage(1)" data-duration="1">
+                <div class="premium-package" onclick="selectPremiumPackage(this, 1, 500)">
                     <div class="package-duration">1 месяц</div>
                     <div class="package-price">500 ₽</div>
                 </div>
-                <div class="premium-package" onclick="selectPremiumPackage(6)" data-duration="6">
+                <div class="premium-package" onclick="selectPremiumPackage(this, 6, 2500)">
                     <div class="package-duration">6 месяцев</div>
                     <div class="package-price">2500 ₽</div>
                 </div>
-                <div class="premium-package" onclick="selectPremiumPackage(12)" data-duration="12">
+                <div class="premium-package" onclick="selectPremiumPackage(this, 12, 4500)">
                     <div class="package-duration">12 месяцев</div>
                     <div class="package-price">4500 ₽</div>
                 </div>

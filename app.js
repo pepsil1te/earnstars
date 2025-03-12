@@ -43,6 +43,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Загружаем цены при старте
     loadPrices();
+    
+    // Запускаем периодическую проверку обновления цен
+    startPriceUpdateChecker();
 });
 
 // Инициализация анимаций
@@ -145,29 +148,8 @@ function buyStars() {
     navigate('buy');
     packagesExpanded = false;
     
-    // Load prices if not already loaded
-    if (!allPackages || allPackages.length === 0) {
-        loadPrices();
-    } else {
-        const packagesContainer = document.querySelector('.packages');
-        if (packagesContainer) {
-            // Показываем первые 3 пакета по умолчанию
-            const packagesHtml = allPackages.slice(0, 3).map(pkg => `
-                <div class="package" onclick="selectPackage(${pkg.stars})">
-                    <div class="package-stars">
-                        <img src="svg/star.svg" alt="star" class="star-icon">
-                        <span>${pkg.stars.toLocaleString()} звёзд</span>
-                    </div>
-                    <div class="package-price">${pkg.price} ₽ <span class="usd">~${pkg.usd} $</span></div>
-                </div>
-            `).join('');
-            packagesContainer.innerHTML = packagesHtml;
-        }
-        const button = document.querySelector('.show-more');
-        if (button) {
-            button.textContent = currentLanguage === 'ru' ? 'Показать все пакеты' : 'Show all packages';
-        }
-    }
+    // Always reload prices to ensure we have the latest
+    loadPrices();
     
     const starsPayButton = document.getElementById('stars-pay-button');
     if (starsPayButton) {
@@ -451,7 +433,13 @@ async function loadPrices() {
         showAllPackages();
     } catch (error) {
         console.error('Ошибка при загрузке цен:', error);
-        document.querySelector('.error-message').textContent = 'Не удалось загрузить цены. Пожалуйста, попробуйте позже.';
+        // Показываем сообщение об ошибке
+        const errorElement = document.querySelector('.error-message');
+        if (errorElement) {
+            errorElement.textContent = 'Не удалось загрузить цены. Пожалуйста, попробуйте позже.';
+        } else {
+            showError('Не удалось загрузить цены. Пожалуйста, попробуйте позже.');
+        }
     }
 }
 
@@ -620,4 +608,79 @@ function processGiftPayment() {
     // Здесь будет логика оплаты
     tg.showAlert(`Покупка подарка ${currentGift.type} для ${recipient}\nСумма: ${currentGift.price} звезд`);
     hideGiftModal();
+}
+
+// Функция для периодической проверки обновления цен
+function startPriceUpdateChecker() {
+    // Проверяем цены каждые 30 секунд
+    setInterval(async () => {
+        try {
+            console.log('Проверка обновления цен...');
+            const timestamp = new Date().getTime();
+            const response = await fetch(`config/prices.json?_=${timestamp}`);
+            
+            if (!response.ok) {
+                throw new Error(`Ошибка загрузки: ${response.status}`);
+            }
+            
+            const prices = await response.json();
+            
+            // Проверяем, изменились ли цены
+            if (allPackages && allPackages.length > 0) {
+                let pricesChanged = false;
+                
+                // Проверяем, изменились ли цены пакетов
+                if (prices.stars.packages.length !== allPackages.length) {
+                    pricesChanged = true;
+                } else {
+                    for (let i = 0; i < prices.stars.packages.length; i++) {
+                        const newPkg = prices.stars.packages[i];
+                        const oldPkg = allPackages.find(p => p.stars === newPkg.stars);
+                        
+                        if (!oldPkg || oldPkg.price !== newPkg.price) {
+                            pricesChanged = true;
+                            break;
+                        }
+                    }
+                }
+                
+                // Если цены изменились, обновляем их
+                if (pricesChanged) {
+                    console.log('Цены изменились, обновляем...');
+                    allPackages = prices.stars.packages;
+                    
+                    // Если мы на странице покупки, обновляем отображение пакетов
+                    const buyPage = document.getElementById('buy-page');
+                    if (buyPage && buyPage.classList.contains('active')) {
+                        showAllPackages();
+                        
+                        // Если выбран пакет, проверяем, не изменилась ли его цена
+                        if (selectedPackage) {
+                            const updatedPackage = allPackages.find(p => p.stars === selectedPackage.stars);
+                            if (updatedPackage) {
+                                if (updatedPackage.price !== selectedPackage.price) {
+                                    selectedPackage = updatedPackage;
+                                    updateSelectedPackageDisplay();
+                                    showError('Цена пакета была обновлена. Пожалуйста, проверьте новую стоимость.');
+                                }
+                            } else {
+                                // Если пакет больше не существует, сбрасываем выбор
+                                selectedPackage = null;
+                                const starsPayButton = document.getElementById('stars-pay-button');
+                                if (starsPayButton) {
+                                    starsPayButton.style.display = 'none';
+                                }
+                                showError('Выбранный пакет больше не доступен.');
+                            }
+                        }
+                    }
+                }
+            } else {
+                // Если пакеты еще не загружены, загружаем их
+                allPackages = prices.stars.packages;
+            }
+        } catch (error) {
+            console.error('Ошибка при проверке обновления цен:', error);
+        }
+    }, 30000); // Проверка каждые 30 секунд
 }

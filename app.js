@@ -406,17 +406,36 @@ function hidePremiumModal() {
     document.querySelectorAll('.premium-package').forEach(pkg => pkg.classList.remove('selected'));
 }
 
-function showGiftModal(giftType, price) {
-    const modal = document.getElementById('gift-modal');
-    if (modal) {
-        modal.classList.add('active');
+function showGiftModal(giftType) {
+    const gift = giftPrices[giftType];
+    if (!gift) {
+        console.error('Подарок не найден:', giftType);
+        return;
     }
+    
+    currentGift = {
+        type: giftType,
+        price: gift.price,
+        name: gift.name
+    };
+    
+    const modal = document.getElementById('gift-modal');
+    if (!modal) {
+        console.error('Модальное окно подарка не найдено');
+        return;
+    }
+    
+    // Обновляем информацию в модальном окне
+    const priceElement = modal.querySelector('.gift-price');
+    const nameElement = modal.querySelector('.gift-name');
     const preview = document.getElementById('gift-preview');
+    
+    if (priceElement) priceElement.textContent = `${gift.price} ₽`;
+    if (nameElement) nameElement.textContent = gift.name;
+    
+    // Очищаем и создаем новую анимацию
     if (preview) {
-        // Очищаем предыдущую анимацию
         preview.innerHTML = '';
-        
-        // Создаем новую анимацию для превью
         lottie.loadAnimation({
             container: preview,
             renderer: 'svg',
@@ -425,13 +444,16 @@ function showGiftModal(giftType, price) {
             path: `gifts/${giftType}.json`
         });
     }
-    currentGift = { type: giftType, price: price };
+    
+    // Показываем модальное окно
+    modal.style.display = 'block';
+    modal.classList.add('active');
     
     // Автозаполнение получателя
     if (tg.initDataUnsafe.user) {
-        const giftRecipientElement = document.getElementById('gift-recipient');
-        if (giftRecipientElement) {
-            giftRecipientElement.value = '@' + tg.initDataUnsafe.user.username;
+        const recipientInput = document.getElementById('gift-recipient');
+        if (recipientInput) {
+            recipientInput.value = '@' + tg.initDataUnsafe.user.username;
         }
     }
 }
@@ -439,116 +461,158 @@ function showGiftModal(giftType, price) {
 function hideGiftModal() {
     const modal = document.getElementById('gift-modal');
     if (modal) {
+        modal.style.display = 'none';
         modal.classList.remove('active');
     }
+    
+    // Очищаем анимацию
     const preview = document.getElementById('gift-preview');
     if (preview) {
         preview.innerHTML = '';
     }
+    
     currentGift = null;
 }
 
-function updateCharCounter(textarea) {
-    const counter = document.getElementById('char-count');
-    if (counter) {
-        counter.textContent = textarea.value.length;
+function buyGift() {
+    navigate('gifts');
+}
+
+function selectGift(type) {
+    tg.showConfirm('Купить подарок?', (confirmed) => {
+        if (confirmed) {
+            tg.showAlert('Функция покупки подарков скоро будет доступна!');
+        }
+    });
+}
+
+function processGiftPayment() {
+    if (!currentGift) return;
+
+    const recipient = document.getElementById('gift-recipient').value;
+    const email = document.getElementById('gift-email').value;
+    const message = document.getElementById('gift-message').value;
+
+    if (!recipient || !email) {
+        tg.showAlert('Пожалуйста, заполните все обязательные поля');
+        return;
+    }
+
+    // Здесь будет логика оплаты
+    tg.showAlert(`Покупка подарка ${currentGift.type} для ${recipient}\nСумма: ${currentGift.price} звезд`);
+    hideGiftModal();
+}
+
+// Функции для Premium
+function buyPremium() {
+    const modal = document.getElementById('premium-modal');
+    if (!modal) {
+        console.error('Модальное окно премиум не найдено');
+        return;
+    }
+    
+    // Показываем модальное окно
+    modal.style.display = 'block';
+    modal.classList.add('active');
+    
+    // Автозаполнение получателя
+    if (tg.initDataUnsafe.user) {
+        const recipientInput = document.getElementById('premium-recipient');
+        if (recipientInput) {
+            recipientInput.value = '@' + tg.initDataUnsafe.user.username;
+        }
+    }
+    
+    // Обновляем цены пакетов
+    updatePremiumPrices();
+}
+
+function hidePremiumModal() {
+    const modal = document.getElementById('premium-modal');
+    if (modal) {
+        modal.style.display = 'none';
+        modal.classList.remove('active');
+    }
+    selectedPremiumPackage = null;
+    
+    // Сбрасываем выделение пакетов
+    document.querySelectorAll('.premium-package').forEach(pkg => {
+        pkg.classList.remove('selected');
+    });
+    
+    // Скрываем кнопку оплаты
+    const payButton = document.getElementById('premium-pay-button');
+    if (payButton) {
+        payButton.style.display = 'none';
     }
 }
 
-async function verifyPrice() {
-    try {
-        // Загружаем актуальные цены перед оплатой
-        const response = await fetch('http://localhost:5000/prices');
-        
-        if (!response.ok) {
-            throw new Error(`Ошибка загрузки: ${response.status}`);
-        }
-        
-        const prices = await response.json();
-        if (!prices || !prices.stars || !prices.stars.packages) {
-            throw new Error('Некорректный формат данных');
-        }
-        
-        // Проверяем цену выбранного пакета
-        const actualPackage = prices.stars.packages.find(pkg => pkg.stars === selectedPackage.stars);
-        if (!actualPackage) {
-            throw new Error('Выбранный пакет больше не доступен');
-        }
-        
-        // Если цена изменилась, обновляем данные и показываем уведомление
-        if (actualPackage.price !== selectedPackage.price) {
-            selectedPackage = actualPackage;
-            allPackages = prices.stars.packages;
-            showAllPackages();
-            updateSelectedPackageDisplay();
-            showError('Цена пакета была обновлена. Пожалуйста, проверьте новую стоимость.');
-            return false;
-        }
-        
-        return true;
-    } catch (error) {
-        console.error('Ошибка при проверке цены:', error);
-        showError('Не удалось проверить актуальность цены. Попробуйте еще раз.');
-        return false;
+function selectPremiumPackage(duration) {
+    const pkg = premiumPrices.find(p => p.duration === duration);
+    if (!pkg) {
+        console.error('Премиум пакет не найден:', duration);
+        return;
+    }
+    
+    selectedPremiumPackage = pkg;
+    
+    // Обновляем UI
+    const packages = document.querySelectorAll('.premium-package');
+    packages.forEach(p => p.classList.remove('selected'));
+    
+    const selectedElement = document.querySelector(`.premium-package[data-duration="${duration}"]`);
+    if (selectedElement) {
+        selectedElement.classList.add('selected');
+    }
+    
+    // Показываем кнопку оплаты
+    const payButton = document.getElementById('premium-pay-button');
+    if (payButton) {
+        payButton.style.display = 'block';
     }
 }
 
-async function loadPrices() {
-    try {
-        console.log('Загрузка цен...');
-        
-        // Используем относительный путь вместо localhost
-        const response = await fetch('/prices');
-        if (!response.ok) {
-            throw new Error(`Ошибка загрузки: ${response.status}`);
-        }
-        const prices = await response.json();
-        allPackages = prices.stars.packages;
-        showAllPackages();
-    } catch (error) {
-        console.error('Ошибка при загрузке цен:', error);
-        document.querySelector('.error-message').textContent = 'Не удалось загрузить цены. Пожалуйста, попробуйте позже.';
+function updatePremiumPrices() {
+    if (!premiumPrices || !premiumPrices.length) {
+        console.error('Цены премиум пакетов не загружены');
+        return;
     }
+    
+    premiumPrices.forEach(pkg => {
+        const element = document.querySelector(`.premium-package[data-duration="${pkg.duration}"]`);
+        if (element) {
+            const priceElement = element.querySelector('.package-price');
+            if (priceElement) {
+                priceElement.textContent = `${pkg.price} ₽`;
+            }
+        }
+    });
 }
 
-// Функция для обработки платежа
-async function processStarsPayment() {
-    try {
-        // Проверяем корректность данных
-        const recipient = document.getElementById('recipient').value.trim();
-        const starsAmount = parseInt(document.getElementById('starsAmount').value);
-        
-        if (!recipient) {
-            showError('Укажите получателя');
-            return;
-        }
-        
-        if (!selectedPackage || !starsAmount) {
-            showError('Выберите количество звезд');
-            return;
-        }
-        
-        // Проверяем актуальность цены перед оплатой
-        const priceIsValid = await verifyPrice();
-        if (!priceIsValid) {
-            return;
-        }
-        
-        // Формируем данные для оплаты
-        const data = {
-            recipient: recipient,
-            stars: starsAmount,
-            price: selectedPackage.price
-        };
-        
-        // Отправляем в telegram-web-app
-        tg.sendData(JSON.stringify(data));
-        tg.close();
-        
-    } catch (error) {
-        console.error('Ошибка при обработке платежа:', error);
-        showError('Произошла ошибка при обработке платежа');
+function processPremiumPayment() {
+    if (!selectedPremiumPackage) {
+        tg.showAlert('Пожалуйста, выберите пакет');
+        return;
     }
+    
+    const recipient = document.getElementById('premium-recipient')?.value;
+    const email = document.getElementById('premium-email')?.value;
+    
+    if (!recipient || !email) {
+        tg.showAlert('Пожалуйста, заполните все поля');
+        return;
+    }
+    
+    // Отправляем данные в телеграм
+    tg.sendData(JSON.stringify({
+        action: 'buy_premium',
+        duration: selectedPremiumPackage.duration,
+        price: selectedPremiumPackage.price,
+        recipient: recipient,
+        email: email
+    }));
+    
+    hidePremiumModal();
 }
 
 // Реферальная система
@@ -608,38 +672,11 @@ function inviteFriends() {
 }
 
 let allPackages = [];
+let giftPrices = {};
+let premiumPrices = [];
 let selectedPackage = null;
-
-// Функции для Premium
+let currentGift = null;
 let selectedPremiumPackage = null;
-
-function selectPremiumPackage(element, duration, price) {
-    document.querySelectorAll('.premium-package').forEach(pkg => pkg.classList.remove('selected'));
-    if (element) {
-        element.classList.add('selected');
-    }
-    selectedPremiumPackage = { duration, price };
-    const premiumPayButton = document.getElementById('premium-pay-button');
-    if (premiumPayButton) {
-        premiumPayButton.style.display = 'block';
-    }
-}
-
-function processPremiumPayment() {
-    if (!selectedPremiumPackage) return;
-
-    const recipient = document.getElementById('premium-recipient').value;
-    const email = document.getElementById('premium-email').value;
-
-    if (!recipient || !email) {
-        tg.showAlert('Пожалуйста, заполните все обязательные поля');
-        return;
-    }
-
-    // Здесь будет логика оплаты
-    tg.showAlert(`Покупка Premium на ${selectedPremiumPackage.duration} мес.\nДля: ${recipient}\nСумма: ${selectedPremiumPackage.price} ₽`);
-    hidePremiumModal();
-}
 
 // Функции для заработка
 function withdrawStars() {
@@ -668,8 +705,6 @@ function contactSupport() {
     window.open('https://t.me/ooostyx', '_blank');
 }
 
-let currentGift = null;
-
 function showError(message) {
     tg.showAlert(message);
 }
@@ -689,31 +724,121 @@ function updateSelectedPackageDisplay() {
     }
 }
 
-function buyGift() {
-    navigate('gifts');
-}
-
-function selectGift(type) {
-    tg.showConfirm('Купить подарок?', (confirmed) => {
-        if (confirmed) {
-            tg.showAlert('Функция покупки подарков скоро будет доступна!');
+async function verifyPrice() {
+    try {
+        // Загружаем актуальные цены перед оплатой
+        const response = await fetch('prices.json');
+        
+        if (!response.ok) {
+            throw new Error(`Ошибка загрузки: ${response.status}`);
         }
-    });
+        
+        const prices = await response.json();
+        if (!prices || !prices.stars || !prices.stars.packages) {
+            throw new Error('Некорректный формат данных');
+        }
+        
+        // Проверяем цену выбранного пакета
+        const actualPackage = prices.stars.packages.find(pkg => pkg.stars === selectedPackage.stars);
+        if (!actualPackage) {
+            throw new Error('Выбранный пакет больше не доступен');
+        }
+        
+        // Если цена изменилась, обновляем данные и показываем уведомление
+        if (actualPackage.price !== selectedPackage.price) {
+            selectedPackage = actualPackage;
+            allPackages = prices.stars.packages;
+            showAllPackages();
+            updateSelectedPackageDisplay();
+            showError('Цена пакета была обновлена. Пожалуйста, проверьте новую стоимость.');
+            return false;
+        }
+        
+        return true;
+    } catch (error) {
+        console.error('Ошибка при проверке цены:', error);
+        showError('Не удалось проверить актуальность цены. Попробуйте еще раз.');
+        return false;
+    }
 }
 
-function processGiftPayment() {
-    if (!currentGift) return;
-
-    const recipient = document.getElementById('gift-recipient').value;
-    const email = document.getElementById('gift-email').value;
-    const message = document.getElementById('gift-message').value;
-
-    if (!recipient || !email) {
-        tg.showAlert('Пожалуйста, заполните все обязательные поля');
-        return;
+async function loadPrices() {
+    try {
+        console.log('Загрузка цен...');
+        
+        // Загружаем цены из файла
+        const response = await fetch('prices.json');
+        
+        if (!response.ok) {
+            throw new Error(`Ошибка загрузки: ${response.status}`);
+        }
+        
+        const prices = await response.json();
+        if (!prices) {
+            throw new Error('Некорректный формат данных');
+        }
+        
+        // Загружаем цены звезд
+        allPackages = prices.stars.packages;
+        showAllPackages();
+        
+        // Загружаем цены подарков
+        giftPrices = prices.gifts;
+        
+        // Загружаем цены премиум
+        premiumPrices = prices.premium.packages;
+        
+        console.log('Цены загружены:', { allPackages, giftPrices, premiumPrices });
+        
+    } catch (error) {
+        console.error('Ошибка при загрузке цен:', error);
+        document.querySelector('.error-message').textContent = 'Не удалось загрузить цены. Пожалуйста, попробуйте позже.';
     }
+}
 
-    // Здесь будет логика оплаты
-    tg.showAlert(`Покупка подарка ${currentGift.type} для ${recipient}\nСумма: ${currentGift.price} звезд`);
-    hideGiftModal();
+// Функция для обработки платежа
+async function processStarsPayment() {
+    try {
+        // Проверяем корректность данных
+        const recipient = document.getElementById('recipient').value.trim();
+        const starsAmount = parseInt(document.getElementById('starsAmount').value);
+        
+        if (!recipient) {
+            showError('Укажите получателя');
+            return;
+        }
+        
+        if (!selectedPackage || !starsAmount) {
+            showError('Выберите количество звезд');
+            return;
+        }
+        
+        // Проверяем актуальность цены перед оплатой
+        const priceIsValid = await verifyPrice();
+        if (!priceIsValid) {
+            return;
+        }
+        
+        // Формируем данные для оплаты
+        const data = {
+            recipient: recipient,
+            stars: starsAmount,
+            price: selectedPackage.price
+        };
+        
+        // Отправляем в telegram-web-app
+        tg.sendData(JSON.stringify(data));
+        tg.close();
+        
+    } catch (error) {
+        console.error('Ошибка при обработке платежа:', error);
+        showError('Произошла ошибка при обработке платежа');
+    }
+}
+
+function updateCharCounter(textarea) {
+    const counter = document.getElementById('char-count');
+    if (counter) {
+        counter.textContent = textarea.value.length;
+    }
 }

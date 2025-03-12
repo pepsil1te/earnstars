@@ -233,19 +233,64 @@
         </form>
     </div>
 
+    <div id="profile-page" class="page">
+        <div class="profile-stats">
+            <div class="stat-item">
+                <div class="stat-value">0</div>
+                <div class="stat-label">Куплено</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">0</div>
+                <div class="stat-label">Продано</div>
+            </div>
+        </div>
+
+        <div class="achievements">
+            <div class="achievements-title">Достижения</div>
+            <div class="achievements-grid">
+                <div class="achievement-card">
+                    <img src="svg/gift.svg" alt="achievement" class="achievement-icon">
+                    <div class="achievement-title">Звёздный собиратель</div>
+                    <div class="achievement-desc">Вы купили более 1,000 звёзд</div>
+                </div>
+                <div class="achievement-card">
+                    <img src="svg/gift.svg" alt="achievement" class="achievement-icon">
+                    <div class="achievement-title">Магистр звёзд</div>
+                    <div class="achievement-desc">Вы купили более 5,000 звёзд</div>
+                </div>
+                <div class="achievement-card">
+                    <img src="svg/gift.svg" alt="achievement" class="achievement-icon">
+                    <div class="achievement-title">Повелитель галактики</div>
+                    <div class="achievement-desc">Вы купили более 10,000 звёзд</div>
+                </div>
+            </div>
+            <button class="show-more-achievements">
+                Смотреть все
+                <img src="svg/arrow-right.svg" alt="arrow">
+            </button>
+        </div>
+
+        <div class="transactions-section">
+            <div class="transactions-header">История транзакций</div>
+            <div class="transactions-card">
+                <div class="transaction-placeholder">
+                    <img src="svg/rocket.svg" alt="rocket">
+                    <div>Ловите звёзды с неба 🚀</div>
+                    <div>Здесь будут отображаться ваши последние транзакции: покупки, получение бонусов и продажа звёзд.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <nav class="bottom-nav">
-        <a href="#" class="nav-item active" onclick="navigate('home')">
-            <img src="svg/home.svg" alt="home" class="nav-icon">
-            <span>Главная</span>
-        </a>
-        <a href="#" class="nav-item" onclick="navigate('earn')">
-            <img src="svg/earn.svg" alt="earn" class="nav-icon">
-            <span>Заработать</span>
-        </a>
-        <a href="#" class="nav-item" onclick="navigate('profile')">
-            <img src="svg/profile.svg" alt="profile" class="nav-icon">
+        <div class="nav-item active" data-page="main-page">
+            <img src="svg/gift.svg" alt="gifts">
+            <span>Подарки</span>
+        </div>
+        <div class="nav-item" data-page="profile-page">
+            <img src="svg/profile.svg" alt="profile">
             <span>Профиль</span>
-        </a>
+        </div>
     </nav>
 
     <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>

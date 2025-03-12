@@ -917,3 +917,31 @@ function loadGifts() {
 function showAllGifts() {
     navigate('gifts');
 }
+
+function showPage(pageId) {
+    document.querySelectorAll('.page').forEach(page => {
+        page.style.display = 'none';
+    });
+    document.getElementById(pageId).style.display = 'block';
+    
+    // Update active nav item
+    document.querySelectorAll('.nav-item').forEach(item => {
+        item.classList.remove('active');
+        if (item.getAttribute('data-page') === pageId) {
+            item.classList.add('active');
+        }
+    });
+}
+
+// Initialize navigation
+document.querySelectorAll('.nav-item').forEach(item => {
+    item.addEventListener('click', () => {
+        const pageId = item.getAttribute('data-page');
+        if (pageId) {
+            showPage(pageId);
+        }
+    });
+});
+
+// Show main page by default
+showPage('main-page');

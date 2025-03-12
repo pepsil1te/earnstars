@@ -127,6 +127,21 @@ function buyForSelf() {
 
 function buyStars() {
     showPage('buy-page');
+    // Показываем первые 3 пакета по умолчанию
+    const packagesContainer = document.querySelector('.packages');
+    if (packagesContainer && allPackages.length > 0) {
+        const packagesHtml = allPackages.slice(0, 3).map(pkg => `
+            <div class="package" onclick="selectPackage(${pkg.stars})">
+                <div class="package-stars">
+                    <img src="svg/star.svg" alt="star" class="star-icon">
+                    <span>${pkg.stars.toLocaleString()} звёзд</span>
+                </div>
+                <div class="package-price">${pkg.price} ₽ <span class="usd">~${pkg.usd} $</span></div>
+            </div>
+        `).join('');
+        packagesContainer.innerHTML = packagesHtml;
+    }
+    packagesExpanded = false;
 }
 
 function selectPackage(amount) {
@@ -825,27 +840,44 @@ function updateCharCounter(textarea) {
     }
 }
 
+function showAllGifts() {
+    showPage('gifts-page');
+    // Очищаем предыдущие анимации
+    const animations = ['heart', 'bear', 'present', 'ring'];
+    animations.forEach(name => {
+        const container = document.getElementById(name + '-animation');
+        if (container) {
+            container.innerHTML = '';
+        }
+    });
+    // Инициализируем анимации заново
+    loadGiftAnimations();
+}
+
 function loadGifts() {
     const gifts = [
         { id: 'heart', name: 'Сердце', price: 170, animation: 'gifts/heart.json' },
         { id: 'bear', name: 'Мишка', price: 200, animation: 'gifts/bear.json' },
-        { id: 'present', name: 'Подарок', price: 150, animation: 'gifts/present.json' },
-        { id: 'ring', name: 'Кольцо', price: 300, animation: 'gifts/ring.json' }
+        { id: 'present', name: 'Подарок', price: 150, animation: 'gifts/present.json' }
     ];
     
     const giftsGrid = document.querySelector('.gifts-grid');
     if (giftsGrid) {
-        const firstThreeGifts = gifts.slice(0, 3);
-        giftsGrid.innerHTML = firstThreeGifts.map(gift => `
-            <div class="gift-card" onclick="showGiftModal('${gift.id}')">
+        // Очищаем грид перед добавлением
+        giftsGrid.innerHTML = '';
+        
+        gifts.forEach(gift => {
+            const giftCard = document.createElement('div');
+            giftCard.className = 'gift-card';
+            giftCard.onclick = () => showGiftModal(gift.id);
+            giftCard.innerHTML = `
                 <div class="gift-animation" id="${gift.id}-animation"></div>
                 <div class="gift-name">${gift.name}</div>
                 <div class="gift-price">${gift.price} ₽</div>
-            </div>
-        `).join('');
-
-        // Инициализируем Lottie анимации
-        firstThreeGifts.forEach(gift => {
+            `;
+            giftsGrid.appendChild(giftCard);
+            
+            // Инициализируем анимацию
             lottie.loadAnimation({
                 container: document.getElementById(`${gift.id}-animation`),
                 renderer: 'svg',
@@ -856,23 +888,12 @@ function loadGifts() {
         });
 
         // Обновляем кнопку "Еще"
-        const remainingCount = Math.max(0, gifts.length - 3);
         const showMoreButton = document.querySelector('.show-more-gifts');
         if (showMoreButton) {
-            if (remainingCount > 0) {
-                showMoreButton.textContent = `Еще ${remainingCount}`;
-                showMoreButton.style.display = 'flex';
-            } else {
-                showMoreButton.style.display = 'none';
-            }
+            showMoreButton.textContent = 'Еще 1';
+            showMoreButton.style.display = 'flex';
         }
     }
-}
-
-function showAllGifts() {
-    showPage('gifts-page');
-    // Инициализируем анимации для всех подарков
-    loadGiftAnimations();
 }
 
 function showPage(pageId) {

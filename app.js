@@ -142,12 +142,32 @@ function buyForSelf() {
 }
 
 function buyStars() {
-    console.log('Переход на страницу покупки звезд');
     navigate('buy');
     packagesExpanded = false;
     
-    // Загружаем актуальные цены напрямую из сервера
-    loadPrices();
+    // Load prices if not already loaded
+    if (!allPackages || allPackages.length === 0) {
+        loadPrices();
+    } else {
+        const packagesContainer = document.querySelector('.packages');
+        if (packagesContainer) {
+            // Показываем первые 3 пакета по умолчанию
+            const packagesHtml = allPackages.slice(0, 3).map(pkg => `
+                <div class="package" onclick="selectPackage(${pkg.stars})">
+                    <div class="package-stars">
+                        <img src="svg/star.svg" alt="star" class="star-icon">
+                        <span>${pkg.stars.toLocaleString()} звёзд</span>
+                    </div>
+                    <div class="package-price">${pkg.price} ₽ <span class="usd">~${pkg.usd} $</span></div>
+                </div>
+            `).join('');
+            packagesContainer.innerHTML = packagesHtml;
+        }
+        const button = document.querySelector('.show-more');
+        if (button) {
+            button.textContent = currentLanguage === 'ru' ? 'Показать все пакеты' : 'Show all packages';
+        }
+    }
     
     const starsPayButton = document.getElementById('stars-pay-button');
     if (starsPayButton) {
@@ -195,37 +215,40 @@ function selectPackage(amount) {
 let packagesExpanded = false;
 
 function showAllPackages() {
-    console.log('Отображение всех пакетов звезд');
-    const packagesContainer = document.getElementById('packages-container');
-    packagesContainer.innerHTML = '';
-
-    if (!packagesData || packagesData.length === 0) {
-        console.error('Данные о пакетах отсутствуют или пусты');
-        packagesContainer.innerHTML = '<p class="error-message">Не удалось загрузить пакеты звезд. Пожалуйста, обновите страницу.</p>';
-        return;
+    const packagesContainer = document.querySelector('.packages');
+    const button = document.querySelector('.show-more');
+    if (!packagesContainer || !allPackages || !button) return;
+    
+    if (!packagesExpanded) {
+        // Показываем все пакеты
+        const packagesHtml = allPackages.map(pkg => `
+            <div class="package" onclick="selectPackage(${pkg.stars})">
+                <div class="package-stars">
+                    <img src="svg/star.svg" alt="star" class="star-icon">
+                    <span>${pkg.stars.toLocaleString()} звёзд</span>
+                </div>
+                <div class="package-price">${pkg.price} ₽ <span class="usd">~${pkg.usd} $</span></div>
+            </div>
+        `).join('');
+        
+        packagesContainer.innerHTML = packagesHtml;
+        button.textContent = currentLanguage === 'ru' ? 'Скрыть пакеты' : 'Hide packages';
+    } else {
+        // Показываем только первые 3 пакета
+        const packagesHtml = allPackages.slice(0, 3).map(pkg => `
+            <div class="package" onclick="selectPackage(${pkg.stars})">
+                <div class="package-stars">
+                    <img src="svg/star.svg" alt="star" class="star-icon">
+                    <span>${pkg.stars.toLocaleString()} звёзд</span>
+                </div>
+                <div class="package-price">${pkg.price} ₽ <span class="usd">~${pkg.usd} $</span></div>
+            </div>
+        `).join('');
+        
+        packagesContainer.innerHTML = packagesHtml;
+        button.textContent = currentLanguage === 'ru' ? 'Показать все пакеты' : 'Show all packages';
     }
-
-    console.log(`Отображение ${packagesData.length} пакетов звезд:`, packagesData);
-
-    packagesData.forEach(package => {
-        const packageElement = document.createElement('div');
-        packageElement.className = 'package';
-        packageElement.innerHTML = `
-            <div class="package-stars">${package.stars} звезд</div>
-            <div class="package-price">${package.price} руб.</div>
-            <button class="buy-package-button" data-stars="${package.stars}" data-price="${package.price}">Купить</button>
-        `;
-        packagesContainer.appendChild(packageElement);
-    });
-
-    // Добавляем обработчики событий для кнопок покупки
-    document.querySelectorAll('.buy-package-button').forEach(button => {
-        button.addEventListener('click', function() {
-            const stars = this.getAttribute('data-stars');
-            const price = this.getAttribute('data-price');
-            selectPackage(stars, price);
-        });
-    });
+    packagesExpanded = !packagesExpanded;
 }
 
 function togglePackages() {
@@ -419,50 +442,16 @@ async function loadPrices() {
         
         // Используем локальный файл вместо относительного пути
         const timestamp = new Date().getTime();
-        console.log(`Запрос к config/prices.json?_=${timestamp}`);
         const response = await fetch(`config/prices.json?_=${timestamp}`);
         if (!response.ok) {
             throw new Error(`Ошибка загрузки: ${response.status}`);
         }
         const prices = await response.json();
-        console.log('Получены данные о ценах:', JSON.stringify(prices));
-        
-        // Проверяем, есть ли изменения в ценах
-        if (allPackages && allPackages.length > 0) {
-            console.log('Сравниваем с текущими пакетами');
-            let hasChanges = false;
-            
-            // Проверяем пакет со звездами 50
-            const newPackage50 = prices.stars.packages.find(p => p.stars === 50);
-            const oldPackage50 = allPackages.find(p => p.stars === 50);
-            
-            if (newPackage50 && oldPackage50) {
-                console.log(`Пакет 50 звезд: старая цена = ${oldPackage50.price}, новая цена = ${newPackage50.price}`);
-                if (newPackage50.price !== oldPackage50.price) {
-                    hasChanges = true;
-                    console.log('Цена изменилась!');
-                }
-            }
-            
-            if (hasChanges) {
-                console.log('Обнаружены изменения в ценах, обновляем пакеты');
-            } else {
-                console.log('Изменений в ценах не обнаружено');
-            }
-        }
-        
         allPackages = prices.stars.packages;
-        console.log('Обновлены данные allPackages:', JSON.stringify(allPackages));
         showAllPackages();
     } catch (error) {
         console.error('Ошибка при загрузке цен:', error);
-        // Показываем сообщение об ошибке
-        const errorElement = document.querySelector('.error-message');
-        if (errorElement) {
-            errorElement.textContent = 'Не удалось загрузить цены. Пожалуйста, попробуйте позже.';
-        } else {
-            showError('Не удалось загрузить цены. Пожалуйста, попробуйте позже.');
-        }
+        document.querySelector('.error-message').textContent = 'Не удалось загрузить цены. Пожалуйста, попробуйте позже.';
     }
 }
 

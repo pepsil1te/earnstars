@@ -860,10 +860,7 @@ function loadGifts() {
         const showMoreButton = document.querySelector('.show-more-gifts');
         if (showMoreButton) {
             if (remainingCount > 0) {
-                showMoreButton.innerHTML = `
-                    Еще ${remainingCount}
-                    <img src="svg/arrow-right.svg" alt="arrow">
-                `;
+                showMoreButton.textContent = `Еще ${remainingCount}`;
                 showMoreButton.style.display = 'flex';
             } else {
                 showMoreButton.style.display = 'none';

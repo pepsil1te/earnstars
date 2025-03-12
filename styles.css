@@ -279,11 +279,13 @@ label {
 
 .package {
     background: linear-gradient(135deg, #B353DB, #8C3DA8);
-    border-radius: 16px;
-    padding: 16px;
+    border-radius: 12px;
+    padding: 12px;
     cursor: pointer;
     transition: all 0.3s ease;
     border: 2px solid transparent;
+    display: flex;
+    justify-content: space-between;
 }
 
 .package:hover,

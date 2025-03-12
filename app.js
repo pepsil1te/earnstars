@@ -74,26 +74,7 @@ function initAnimations() {
 
 // Навигация
 function navigate(page) {
-    const currentPage = document.querySelector('.page.active');
-    const targetPage = document.getElementById(page + '-page');
-    
-    // Если уходим со страницы покупки звезд, сворачиваем пакеты
-    if (currentPage && currentPage.id === 'buy-page' && targetPage.id !== 'buy-page') {
-        const packagesContainer = document.querySelector('.packages');
-        if (packagesContainer && packagesExpanded) {
-            packagesExpanded = true; // Устанавливаем true, чтобы следующий вызов showAllPackages свернул пакеты
-            showAllPackages();
-        }
-    }
-    
-    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-    if (targetPage) {
-        targetPage.classList.add('active');
-    }
-    
-    document.querySelectorAll('.nav-item').forEach(item => {
-        item.classList.toggle('active', item.getAttribute('onclick').includes(page));
-    });
+    showPage(page + '-page');
 }
 
 // Переключение языка
@@ -145,30 +126,7 @@ function buyForSelf() {
 }
 
 function buyStars() {
-    navigate('buy');
-    packagesExpanded = false;
-    const packagesContainer = document.querySelector('.packages');
-    if (packagesContainer) {
-        // Показываем первые 3 пакета по умолчанию
-        const packagesHtml = allPackages.slice(0, 3).map(pkg => `
-            <div class="package" onclick="selectPackage(${pkg.stars})">
-                <div class="package-stars">
-                    <img src="svg/star.svg" alt="star" class="star-icon">
-                    <span>${pkg.stars.toLocaleString()} звёзд</span>
-                </div>
-                <div class="package-price">${pkg.price} ₽ <span class="usd">~${pkg.usd} $</span></div>
-            </div>
-        `).join('');
-        packagesContainer.innerHTML = packagesHtml;
-    }
-    const button = document.querySelector('.show-more');
-    if (button) {
-        button.textContent = currentLanguage === 'ru' ? 'Показать все пакеты' : 'Show all packages';
-    }
-    const starsPayButton = document.getElementById('stars-pay-button');
-    if (starsPayButton) {
-        starsPayButton.style.display = 'none';
-    }
+    showPage('buy-page');
 }
 
 function selectPackage(amount) {
@@ -915,7 +873,9 @@ function loadGifts() {
 }
 
 function showAllGifts() {
-    navigate('gifts');
+    showPage('gifts-page');
+    // Инициализируем анимации для всех подарков
+    loadGiftAnimations();
 }
 
 function showPage(pageId) {
@@ -945,3 +905,16 @@ document.querySelectorAll('.nav-item').forEach(item => {
 
 // Show main page by default
 showPage('main-page');
+
+function loadGiftAnimations() {
+    const animations = ['heart', 'bear', 'present', 'ring'];
+    animations.forEach(name => {
+        lottie.loadAnimation({
+            container: document.getElementById(name + '-animation'),
+            renderer: 'svg',
+            loop: true,
+            autoplay: true,
+            path: `gifts/${name}.json`
+        });
+    });
+}

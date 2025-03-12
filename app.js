@@ -869,10 +869,10 @@ function updateCharCounter(textarea) {
 
 function loadGifts() {
     const gifts = [
-        { id: 'heart', name: 'Сердце', price: 300, animation: 'gifts/heart.json' },
-        { id: 'bear', name: 'Мишка', price: 600, animation: 'gifts/bear.json' },
-        { id: 'present', name: 'Подарок', price: 700, animation: 'gifts/present.json' },
-        { id: 'ring', name: 'Кольцо', price: 1000, animation: 'gifts/ring.json' }
+        { id: 'heart', name: 'Сердце', price: 170, animation: 'gifts/heart.json' },
+        { id: 'bear', name: 'Мишка', price: 200, animation: 'gifts/bear.json' },
+        { id: 'present', name: 'Подарок', price: 150, animation: 'gifts/present.json' },
+        { id: 'ring', name: 'Кольцо', price: 300, animation: 'gifts/ring.json' }
     ];
     
     const giftsGrid = document.querySelector('.gifts-grid');
@@ -881,6 +881,7 @@ function loadGifts() {
         giftsGrid.innerHTML = firstThreeGifts.map(gift => `
             <div class="gift-card" onclick="showGiftModal('${gift.id}')">
                 <div class="gift-animation" id="${gift.id}-animation"></div>
+                <div class="gift-name">${gift.name}</div>
                 <div class="gift-price">${gift.price} ₽</div>
             </div>
         `).join('');

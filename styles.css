@@ -6,6 +6,9 @@
     --tg-theme-button-color: #9d3ac4;
     --tg-theme-button-text-color: #ffffff;
     --tg-theme-secondary-bg-color: #212a32;
+    --main-purple: #9d3ac4;
+    --main-purple-hover: #b042e0;
+    --main-gradient: linear-gradient(135deg, #9d3ac4, #b042e0);
 }
 
 body {
@@ -320,34 +323,51 @@ label {
     right: 0;
     background: var(--tg-theme-secondary-bg-color);
     display: flex;
-    justify-content: space-around;
+    justify-content: space-between;
     align-items: center;
-    padding: 8px 0;
-    border-top-left-radius: 12px;
-    border-top-right-radius: 12px;
+    padding: 8px 16px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .nav-item {
-    flex: 1;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     text-decoration: none;
-    color: #8E8E93;
+    color: var(--tg-theme-hint-color);
     font-size: 12px;
     gap: 4px;
-    padding: 4px 0;
+    padding: 8px 16px;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.nav-item::after {
+    content: '';
+    position: absolute;
+    bottom: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 2px;
+    background: var(--main-purple);
+    transition: width 0.3s ease;
+}
+
+.nav-item.active {
+    color: var(--main-purple);
+}
+
+.nav-item.active::after {
+    width: 100%;
 }
 
 .nav-icon {
     width: 24px;
     height: 24px;
-    opacity: 0.5;
-}
-
-.nav-item.active {
-    color: var(--tg-theme-text-color);
+    opacity: 0.7;
+    transition: opacity 0.3s ease;
 }
 
 .nav-item.active .nav-icon {
@@ -937,62 +957,84 @@ button {
 .gifts-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 8px;
-    margin-bottom: 12px;
+    gap: 12px;
+    margin-bottom: 16px;
 }
 
 .gift-card {
-    background: var(--tg-theme-secondary-bg-color);
-    border-radius: 12px;
-    padding: 12px;
+    background: var(--main-gradient);
+    border-radius: 16px;
+    padding: 16px;
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 8px;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.gift-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.1);
+    opacity: 0;
+    transition: opacity 0.3s ease;
 }
 
 .gift-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px rgba(157, 58, 196, 0.3);
 }
 
-.gift-card:active {
-    transform: translateY(0);
-}
-
-.gift-card img {
-    width: 32px;
-    height: 32px;
-}
-
-.gift-price {
-    font-size: 14px;
-    color: var(--tg-theme-text-color);
-}
-
-.show-more-gifts {
-    width: 100%;
-    background: var(--tg-theme-secondary-bg-color);
-    border: none;
-    border-radius: 12px;
-    padding: 12px;
-    color: var(--tg-theme-text-color);
-    font-size: 14px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    cursor: pointer;
-}
-
-.show-more-gifts img {
-    width: 16px;
-    height: 16px;
+.gift-card:hover::before {
+    opacity: 1;
 }
 
 .gift-animation {
     width: 64px;
     height: 64px;
-    margin-bottom: 8px;
+    margin-bottom: 4px;
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
+}
+
+.gift-name {
+    color: var(--tg-theme-text-color);
+    font-size: 14px;
+    font-weight: 500;
+    text-align: center;
+}
+
+.gift-price {
+    color: var(--tg-theme-text-color);
+    font-size: 16px;
+    font-weight: 600;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.show-more-gifts {
+    background: var(--main-gradient);
+    border: none;
+    border-radius: 12px;
+    padding: 12px 16px;
+    color: var(--tg-theme-text-color);
+    font-size: 14px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    width: 100%;
+    box-shadow: 0 4px 12px rgba(157, 58, 196, 0.2);
+}
+
+.show-more-gifts:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(157, 58, 196, 0.3);
 }

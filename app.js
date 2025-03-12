@@ -784,7 +784,7 @@ async function loadPrices() {
         console.log('Загрузка цен...');
         
         // Загружаем цены из файла
-        const response = await fetch('prices.json');
+        const response = await fetch('config/prices.json');
         
         if (!response.ok) {
             throw new Error(`Ошибка загрузки: ${response.status}`);
@@ -797,7 +797,6 @@ async function loadPrices() {
         
         // Загружаем цены звезд
         allPackages = prices.stars.packages;
-        showAllPackages();
         
         // Загружаем цены подарков
         giftPrices = prices.gifts;
@@ -807,9 +806,18 @@ async function loadPrices() {
         
         console.log('Цены загружены:', { allPackages, giftPrices, premiumPrices });
         
+        // Показываем пакеты только если мы на странице покупки
+        const buyPage = document.getElementById('buy-page');
+        if (buyPage && buyPage.classList.contains('active')) {
+            showAllPackages();
+        }
+        
     } catch (error) {
         console.error('Ошибка при загрузке цен:', error);
-        document.querySelector('.error-message').textContent = 'Не удалось загрузить цены. Пожалуйста, попробуйте позже.';
+        const errorElement = document.querySelector('.error-message');
+        if (errorElement) {
+            errorElement.textContent = 'Не удалось загрузить цены. Пожалуйста, попробуйте позже.';
+        }
     }
 }
 

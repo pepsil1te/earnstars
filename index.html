@@ -20,14 +20,20 @@
         </div>
     </div>
 
-    <div id="home-page" class="page active">
+    <div id="main-page" class="page active">
         <div class="main-actions">
             <div class="action-cards">
                 <div class="action-card" onclick="buyStars()">
                     <div class="action-icon">
-                        <img src="svg/star.svg" alt="star" class="arrow-down">
+                        <img src="svg/star.svg" alt="star">
                     </div>
                     <div class="action-text">Купить звёзды</div>
+                </div>
+                <div class="action-card" onclick="navigate('earn')">
+                    <div class="action-icon">
+                        <img src="svg/earn.svg" alt="earn">
+                    </div>
+                    <div class="action-text">Заработать</div>
                 </div>
             </div>
         </div>
@@ -59,7 +65,7 @@
                 </div>
             </div>
             <button class="show-more-gifts" onclick="showAllGifts()">
-                Еще 12
+                Еще
                 <img src="svg/arrow-right.svg" alt="arrow">
             </button>
         </div>
@@ -284,8 +290,12 @@
 
     <nav class="bottom-nav">
         <div class="nav-item active" data-page="main-page">
-            <img src="svg/gift.svg" alt="gifts">
-            <span>Подарки</span>
+            <img src="svg/home.svg" alt="home">
+            <span>Главная</span>
+        </div>
+        <div class="nav-item" data-page="earn-page">
+            <img src="svg/earn.svg" alt="earn">
+            <span>Заработать</span>
         </div>
         <div class="nav-item" data-page="profile-page">
             <img src="svg/profile.svg" alt="profile">

@@ -35,7 +35,52 @@ body {
     justify-content: space-between;
     align-items: center;
     padding: 16px;
-    background: #212a32;
+    background: rgba(33, 42, 50, 0.8);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-radius: 16px;
+    margin-bottom: 24px;
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.user-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #B353DB, #8C3DA8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.user-name {
+    font-size: 16px;
+    font-weight: 600;
+    color: #fff;
+}
+
+.lang-switch {
+    background: linear-gradient(135deg, #B353DB, #8C3DA8);
+    border: none;
+    border-radius: 8px;
+    padding: 8px 12px;
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.lang-switch:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
 }
 
 .profile {
@@ -232,28 +277,24 @@ label {
 }
 
 .package {
-    background: #1a2026;
-    border-radius: 12px;
+    background: linear-gradient(135deg, #B353DB, #8C3DA8);
+    border-radius: 16px;
     padding: 16px;
     cursor: pointer;
-    transition: all 0.2s ease;
-    border: 2px solid #2a343d;
-    position: relative;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
 }
 
-.package:hover {
-    border-color: #9d3ac4;
-    box-shadow: 0 0 15px rgba(157, 58, 196, 0.3);
+.package:hover,
+.action-card:hover,
+.premium-card:hover {
     transform: translateY(-2px);
+    box-shadow: 0 8px 16px rgba(179, 83, 219, 0.3);
 }
 
 .package.selected {
-    border-color: #9d3ac4;
-    box-shadow: 0 0 20px rgba(157, 58, 196, 0.4);
-    background: linear-gradient(45deg, #1a2026, #212a32);
+    border: 2px solid #fff;
+    box-shadow: 0 0 16px rgba(255, 255, 255, 0.3);
 }
 
 .package::before {
@@ -910,15 +951,15 @@ button {
 }
 
 .action-card {
-    flex: 1;
-    background: var(--tg-theme-secondary-bg-color);
-    border-radius: 12px;
+    background: linear-gradient(135deg, #B353DB, #8C3DA8);
+    border-radius: 16px;
     padding: 16px;
-    cursor: pointer;
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
 }
 
 .action-icon {
@@ -934,23 +975,25 @@ button {
 .action-icon img {
     width: 24px;
     height: 24px;
+    filter: brightness(0) invert(1);
 }
 
 .action-text {
+    color: #fff;
     font-size: 14px;
-    color: var(--tg-theme-text-color);
-    text-align: center;
+    font-weight: 500;
 }
 
 .premium-card {
-    margin: 16px;
-    background: var(--tg-theme-secondary-bg-color);
-    border-radius: 12px;
+    background: linear-gradient(135deg, #B353DB, #8C3DA8);
+    border-radius: 16px;
     padding: 16px;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    margin-top: 24px;
     cursor: pointer;
+    transition: all 0.3s ease;
 }
 
 .premium-info {

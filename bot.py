@@ -81,11 +81,19 @@ bot = telebot.TeleBot(os.getenv('BOT_TOKEN'))
 
 @bot.message_handler(commands=['start'])
 def start(message):
-    if message.from_user.id != int(os.getenv('ADMIN_ID')):
-        bot.reply_to(message, "Извините, у вас нет доступа к этому боту.")
-        return
+    keyboard = InlineKeyboardMarkup()
+    app_button = InlineKeyboardButton(text="Открыть приложение", web_app={"url": os.getenv('WEBAPP_URL')})
+    channel_button = InlineKeyboardButton(text="Подписаться на канал", url="https://t.me/ez_stars")
+    keyboard.add(app_button)
+    keyboard.add(channel_button)
     
-    bot.reply_to(message, "Привет! Используйте команду /admin для управления ценами.")
+    welcome_text = """Привет! Покупай и продавай звезды без ожидания.
+
+На нашей платформе вы получаете не только самые выгодные условия, но и шанс выиграть крутые призы за сделку! ⭐️
+
+Подпишитесь на наш официальный канал и примите участие в еженедельных розыгрышах! 🎁"""
+    
+    bot.send_message(message.chat.id, welcome_text, reply_markup=keyboard)
 
 @bot.message_handler(commands=['admin'])
 def admin_panel(message):

@@ -86,7 +86,40 @@ function toggleLanguage() {
     if (currentLangElement) {
         currentLangElement.textContent = currentLanguage.toUpperCase();
     }
-    updateTexts();
+    
+    // Обновляем все тексты на странице
+    document.querySelectorAll('[data-ru]').forEach(element => {
+        const ruText = element.getAttribute('data-ru');
+        const enText = element.getAttribute('data-en');
+        element.textContent = currentLanguage === 'ru' ? ruText : enText;
+    });
+
+    // Обновляем плейсхолдеры
+    const recipientInput = document.getElementById('recipient');
+    if (recipientInput) {
+        recipientInput.placeholder = currentLanguage === 'ru' ? 'Введите Telegram никнейм' : 'Enter Telegram username';
+    }
+
+    const emailInput = document.getElementById('email');
+    if (emailInput) {
+        emailInput.placeholder = currentLanguage === 'ru' ? 'Введите ваш Email' : 'Enter your Email';
+    }
+
+    const starsInput = document.getElementById('starsAmount');
+    if (starsInput) {
+        starsInput.placeholder = currentLanguage === 'ru' ? 'Введите количество от 50 до 20 000' : 'Enter amount from 50 to 20,000';
+    }
+
+    // Обновляем кнопки
+    const showMoreButton = document.querySelector('.show-more-gifts');
+    if (showMoreButton) {
+        showMoreButton.textContent = currentLanguage === 'ru' ? 'Еще' : 'More';
+    }
+
+    const showMoreAchievements = document.querySelector('.show-more-achievements');
+    if (showMoreAchievements) {
+        showMoreAchievements.textContent = currentLanguage === 'ru' ? 'Смотреть все' : 'View all';
+    }
 }
 
 function updateTexts() {
@@ -197,7 +230,7 @@ function showAllPackages() {
         });
         return;
     }
-
+    
     if (!packagesExpanded) {
         // Показываем все пакеты
         console.log('Отображаем все пакеты');
@@ -537,36 +570,46 @@ function hidePremiumModal() {
 }
 
 function selectPremiumPackage(duration) {
-    const pkg = premiumPrices.find(p => p.duration === duration);
-    if (!pkg) {
-        console.error('Премиум пакет не найден:', duration);
-        return;
-    }
+    const packages = document.querySelectorAll('.package');
+    let selectedPackage = null;
     
-    selectedPremiumPackage = pkg;
-    
-    // Обновляем UI
-    const packages = document.querySelectorAll('.premium-package');
-    packages.forEach(p => p.classList.remove('selected'));
-    
-    const selectedElement = document.querySelector(`.premium-package[data-duration="${duration}"]`);
-    if (selectedElement) {
-        selectedElement.classList.add('selected');
-    }
-    
-    // Показываем кнопку оплаты
-    const payButton = document.getElementById('premium-pay-button');
-    if (payButton) {
+    packages.forEach(pkg => {
+        if (pkg.getAttribute('data-duration') === duration.toString()) {
+            pkg.classList.add('selected');
+            selectedPackage = pkg;
+        } else {
+            pkg.classList.remove('selected');
+        }
+    });
+
+    const payButton = document.querySelector('#premium-pay-button');
+    if (payButton && selectedPackage) {
+        const price = selectedPackage.getAttribute('data-price');
+        payButton.textContent = `Оплатить ${price} ₽`;
         payButton.style.display = 'block';
+    }
+}
+
+function showPremiumModal() {
+    const modal = document.getElementById('premium-modal');
+    if (modal) {
+        modal.classList.add('active');
+        const packages = document.querySelectorAll('.package');
+        packages.forEach(pkg => pkg.classList.remove('selected'));
+        
+        const payButton = document.querySelector('#premium-pay-button');
+        if (payButton) {
+            payButton.style.display = 'none';
+        }
     }
 }
 
 function updatePremiumPrices() {
     if (!premiumPrices || !premiumPrices.length) {
         console.error('Цены премиум пакетов не загружены');
-        return;
-    }
-    
+            return;
+        }
+        
     premiumPrices.forEach(pkg => {
         const element = document.querySelector(`.premium-package[data-duration="${pkg.duration}"]`);
         if (element) {
@@ -581,9 +624,9 @@ function updatePremiumPrices() {
 function processPremiumPayment() {
     if (!selectedPremiumPackage) {
         tg.showAlert('Пожалуйста, выберите пакет');
-        return;
-    }
-    
+            return;
+        }
+        
     const recipient = document.getElementById('premium-recipient')?.value;
     const email = document.getElementById('premium-email')?.value;
     

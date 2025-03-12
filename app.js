@@ -169,7 +169,7 @@ function buyStars() {
                     <img src="svg/star.svg" alt="star" class="star-icon">
                     <span>${pkg.stars.toLocaleString()} звёзд</span>
                 </div>
-                <div class="package-price">${pkg.price} ₽ <span class="usd">~${pkg.usd} $</span></div>
+                <div class="package-price">${pkg.price} ₽</span></div>
             </div>
         `).join('');
         packagesContainer.innerHTML = packagesHtml;
@@ -240,7 +240,7 @@ function showAllPackages() {
                     <img src="svg/star.svg" alt="star" class="star-icon">
                     <span>${pkg.stars.toLocaleString()} звёзд</span>
                 </div>
-                <div class="package-price">${pkg.price} ₽ <span class="usd">~${pkg.usd} $</span></div>
+                <div class="package-price">${pkg.price} ₽</span></div>
             </div>
         `).join('');
         
@@ -255,7 +255,7 @@ function showAllPackages() {
                     <img src="svg/star.svg" alt="star" class="star-icon">
                     <span>${pkg.stars.toLocaleString()} звёзд</span>
                 </div>
-                <div class="package-price">${pkg.price} ₽ <span class="usd">~${pkg.usd} $</span></div>
+                <div class="package-price">${pkg.price} ₽</span></div>
             </div>
         `).join('');
         

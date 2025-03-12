@@ -179,12 +179,14 @@ label {
     color: white;
     font-size: 16px;
     box-sizing: border-box;
+    height: 48px;
 }
 
 .input-container .input-icon {
     position: absolute;
     left: 12px;
-    top: 14px;
+    top: 50%;
+    transform: translateY(-50%);
     width: 20px;
     height: 20px;
     opacity: 0.6;
@@ -224,6 +226,8 @@ label {
     border: 2px solid #2a343d;
     position: relative;
     overflow: hidden;
+    display: flex;
+    flex-direction: column;
 }
 
 .package:hover {
@@ -837,4 +841,15 @@ button {
 
 .force-update:hover {
     background-color: #b042e0;
+}
+
+.buy-package-button {
+    background: none;
+    border: none;
+    padding: 0;
+    margin: 0;
+    width: 100%;
+    cursor: pointer;
+    color: inherit;
+    text-align: left;
 }

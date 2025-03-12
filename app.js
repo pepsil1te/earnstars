@@ -226,14 +226,12 @@ function showAllPackages() {
         // Показываем все пакеты
         console.log('Отображаем все пакеты');
         const packagesHtml = allPackages.map(pkg => `
-            <div class="package">
-                <button class="buy-package-button" data-stars="${pkg.stars}" onclick="selectPackage(${pkg.stars})">
-                    <div class="package-stars">
-                        <img src="svg/star.svg" alt="star" class="star-icon">
-                        <span>${pkg.stars.toLocaleString()} звёзд</span>
-                    </div>
-                    <div class="package-price">${pkg.price} ₽ <span class="usd">~${pkg.usd} $</span></div>
-                </button>
+            <div class="package" onclick="selectPackage(${pkg.stars})">
+                <div class="package-stars">
+                    <img src="svg/star.svg" alt="star" class="star-icon">
+                    <span>${pkg.stars.toLocaleString()} звёзд</span>
+                </div>
+                <div class="package-price">${pkg.price} ₽ <span class="usd">~${pkg.usd} $</span></div>
             </div>
         `).join('');
         
@@ -243,14 +241,12 @@ function showAllPackages() {
         // Показываем только первые 3 пакета
         console.log('Отображаем первые 3 пакета');
         const packagesHtml = allPackages.slice(0, 3).map(pkg => `
-            <div class="package">
-                <button class="buy-package-button" data-stars="${pkg.stars}" onclick="selectPackage(${pkg.stars})">
-                    <div class="package-stars">
-                        <img src="svg/star.svg" alt="star" class="star-icon">
-                        <span>${pkg.stars.toLocaleString()} звёзд</span>
-                    </div>
-                    <div class="package-price">${pkg.price} ₽ <span class="usd">~${pkg.usd} $</span></div>
-                </button>
+            <div class="package" onclick="selectPackage(${pkg.stars})">
+                <div class="package-stars">
+                    <img src="svg/star.svg" alt="star" class="star-icon">
+                    <span>${pkg.stars.toLocaleString()} звёзд</span>
+                </div>
+                <div class="package-price">${pkg.price} ₽ <span class="usd">~${pkg.usd} $</span></div>
             </div>
         `).join('');
         

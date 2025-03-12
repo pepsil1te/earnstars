@@ -208,19 +208,32 @@ function selectPackage(amount) {
 let packagesExpanded = false;
 
 function showAllPackages() {
+    console.log('Вызвана функция showAllPackages');
+    console.log('Текущие пакеты:', JSON.stringify(allPackages));
+    
     const packagesContainer = document.querySelector('.packages');
     const button = document.querySelector('.show-more');
-    if (!packagesContainer || !allPackages || !button) return;
-    
+    if (!packagesContainer || !allPackages || !button) {
+        console.error('Не найдены необходимые элементы:', {
+            packagesContainer: !!packagesContainer,
+            allPackages: !!allPackages,
+            button: !!button
+        });
+        return;
+    }
+
     if (!packagesExpanded) {
         // Показываем все пакеты
+        console.log('Отображаем все пакеты');
         const packagesHtml = allPackages.map(pkg => `
-            <div class="package" onclick="selectPackage(${pkg.stars})">
-                <div class="package-stars">
-                    <img src="svg/star.svg" alt="star" class="star-icon">
-                    <span>${pkg.stars.toLocaleString()} звёзд</span>
-                </div>
-                <div class="package-price">${pkg.price} ₽ <span class="usd">~${pkg.usd} $</span></div>
+            <div class="package">
+                <button class="buy-package-button" data-stars="${pkg.stars}" onclick="selectPackage(${pkg.stars})">
+                    <div class="package-stars">
+                        <img src="svg/star.svg" alt="star" class="star-icon">
+                        <span>${pkg.stars.toLocaleString()} звёзд</span>
+                    </div>
+                    <div class="package-price">${pkg.price} ₽ <span class="usd">~${pkg.usd} $</span></div>
+                </button>
             </div>
         `).join('');
         
@@ -228,13 +241,16 @@ function showAllPackages() {
         button.textContent = currentLanguage === 'ru' ? 'Скрыть пакеты' : 'Hide packages';
     } else {
         // Показываем только первые 3 пакета
+        console.log('Отображаем первые 3 пакета');
         const packagesHtml = allPackages.slice(0, 3).map(pkg => `
-            <div class="package" onclick="selectPackage(${pkg.stars})">
-                <div class="package-stars">
-                    <img src="svg/star.svg" alt="star" class="star-icon">
-                    <span>${pkg.stars.toLocaleString()} звёзд</span>
-                </div>
-                <div class="package-price">${pkg.price} ₽ <span class="usd">~${pkg.usd} $</span></div>
+            <div class="package">
+                <button class="buy-package-button" data-stars="${pkg.stars}" onclick="selectPackage(${pkg.stars})">
+                    <div class="package-stars">
+                        <img src="svg/star.svg" alt="star" class="star-icon">
+                        <span>${pkg.stars.toLocaleString()} звёзд</span>
+                    </div>
+                    <div class="package-price">${pkg.price} ₽ <span class="usd">~${pkg.usd} $</span></div>
+                </button>
             </div>
         `).join('');
         
@@ -242,6 +258,7 @@ function showAllPackages() {
         button.textContent = currentLanguage === 'ru' ? 'Показать все пакеты' : 'Show all packages';
     }
     packagesExpanded = !packagesExpanded;
+    console.log('Пакеты обновлены, packagesExpanded =', packagesExpanded);
 }
 
 function togglePackages() {
